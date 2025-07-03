@@ -1,5 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ColorSchemeScript } from "@mantine/core";
+import ClientLayout from "./client-layout";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,8 +21,11 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+      <body
+        className={`${geistSans.variable} ${geistMono.variable}`}
+        suppressHydrationWarning
+      >
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );
