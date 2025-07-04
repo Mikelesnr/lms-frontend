@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MantineProvider,
   useComputedColorScheme,
   useMantineColorScheme,
 } from "@mantine/core";
 import "@mantine/core/styles.css";
+import api from "@/lib/api";
 
 export default function ClientLayout({ children }) {
   const [colorScheme, setColorScheme] = useState("light");
+
+  useEffect(() => {
+    // ✅ Fetch CSRF cookie once at app load
+    api.get("/sanctum/csrf-cookie").catch((err) => {
+      console.error("Failed to fetch CSRF cookie:", err);
+    });
+  }, []);
 
   return (
     <MantineProvider
