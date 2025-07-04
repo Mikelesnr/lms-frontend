@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { TextInput, Textarea } from "@mantine/core";
 import api from "@/lib/api";
 import StandardModal from "../layouts/StandardModal";
+import Cookies from "js-cookie"; // ✅ import js-cookie
 
 export default function EditCourseModal({ course, onClose, onSaved }) {
   const [title, setTitle] = useState("");
@@ -15,17 +16,30 @@ export default function EditCourseModal({ course, onClose, onSaved }) {
     }
   }, [course]);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!course) return;
     setLoading(true);
-    api
-      .put(`/api/courses/${course.id}`, { title, description })
-      .then(() => {
-        onSaved();
-        onClose();
-      })
-      .catch((err) => console.error("Failed to update course:", err))
-      .finally(() => setLoading(false));
+
+    try {
+      const xsrfToken = Cookies.get("XSRF-TOKEN");
+
+      await api.put(
+        `/api/courses/${course.id}`,
+        { title, description },
+        {
+          headers: {
+            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
+          },
+        }
+      );
+
+      onSaved();
+      onClose();
+    } catch (err) {
+      console.error("Failed to update course:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

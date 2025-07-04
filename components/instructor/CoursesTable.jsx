@@ -7,12 +7,14 @@ import api from "@/lib/api";
 import AddCourseForm from "./AddCourseForm";
 import EditCourseModal from "./EditCourseModal";
 import CourseDetails from "./CourseDetails";
+import DeleteCourseConfirm from "./DeleteCourseConfirm"; // ✅ new import
 
 export default function CoursesTable() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [courseToDelete, setCourseToDelete] = useState(null); // ✅ modal state
 
   const fetchCourses = () => {
     setLoading(true);
@@ -28,22 +30,8 @@ export default function CoursesTable() {
   }, []);
 
   const handleBack = () => setSelectedCourseId(null);
-
-  const handleEdit = (course) => {
-    setEditingCourse(course);
-  };
-
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this course?")) return;
-
-    try {
-      await api.get("/sanctum/csrf-cookie"); // Ensure CSRF cookie is set
-      await api.delete(`/api/courses/${id}`);
-      fetchCourses();
-    } catch (err) {
-      console.error("Failed to delete course:", err);
-    }
-  };
+  const handleEdit = (course) => setEditingCourse(course);
+  const handleDeleteModal = (course) => setCourseToDelete(course); // ✅ open modal
 
   if (loading) return <Loader mt="md" />;
   if (!courses.length) return <Text>No courses found.</Text>;
@@ -67,6 +55,12 @@ export default function CoursesTable() {
         course={editingCourse}
         onClose={() => setEditingCourse(null)}
         onSaved={fetchCourses}
+      />
+
+      <DeleteCourseConfirm
+        course={courseToDelete}
+        onClose={() => setCourseToDelete(null)}
+        onDeleted={fetchCourses}
       />
 
       <Table striped withTableBorder highlightOnHover>
@@ -110,7 +104,7 @@ export default function CoursesTable() {
                   color="red"
                   variant="light"
                   style={{ margin: 10 }}
-                  onClick={() => handleDelete(course.id)}
+                  onClick={() => handleDeleteModal(course)}
                 >
                   Delete
                 </Button>

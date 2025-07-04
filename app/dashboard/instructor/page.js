@@ -79,7 +79,7 @@ export default function InstructorDashboard() {
         <>
           <Group justify="space-between" mb="md" mt="md" pl="md">
             <Title order={4}>📚 My Courses</Title>
-            <Button size="sm">Add Course</Button>
+            {/* <Button size="sm">Add Course</Button> */}
           </Group>
           <Box pl="md">
             <CoursesTable data={data} />

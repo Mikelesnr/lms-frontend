@@ -1,23 +1,40 @@
 import { useState } from "react";
 import { TextInput, Textarea, Button, Paper, Group } from "@mantine/core";
 import api from "@/lib/api";
+import Cookies from "js-cookie";
 
 export default function AddCourseForm({ onSuccess }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setLoading(true);
-    api
-      .post("/api/courses", { title, description })
-      .then(() => {
-        setTitle("");
-        setDescription("");
-        onSuccess(); // trigger refresh
-      })
-      .catch((err) => console.error("Failed to create course:", err))
-      .finally(() => setLoading(false));
+
+    try {
+      // Ensure CSRF cookies are set
+      // await api.get("/sanctum/csrf-cookie");
+
+      const xsrfToken = Cookies.get("XSRF-TOKEN");
+
+      await api.post(
+        "/api/courses",
+        { title, description },
+        {
+          headers: {
+            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
+          },
+        }
+      );
+
+      setTitle("");
+      setDescription("");
+      onSuccess(); // trigger refresh
+    } catch (err) {
+      console.error("Failed to create course:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -32,17 +32,24 @@ export default function LoginPage() {
       const xsrfToken = Cookies.get("XSRF-TOKEN");
 
       // Step 3: Send login request with token in headers
-      await api.post(
+      const response = await api.post(
         "/auth/login",
         { email, password },
         {
           headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
+            "X-XSRF-TOKEN": decodeURIComponent(Cookies.get("XSRF-TOKEN")),
           },
         }
       );
 
-      router.push("/student"); // Redirect after login
+      const role = response.data.role;
+      if (role === "admin") {
+        router.push("/dashboard/admin");
+      } else if (role === "instructor") {
+        router.push("/dashboard/instructor");
+      } else {
+        router.push("/dashboard/student");
+      }
     } catch (err) {
       console.error("Login failed:", err);
       setError("Invalid credentials or server error");
