@@ -16,6 +16,7 @@
     "@mantine/notifications": "^8.1.2",
     "@tabler/icons-react": "^3.34.0",
     "axios": "^1.10.0",
+    "js-cookie": "^3.0.5",
     "next": "15.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
