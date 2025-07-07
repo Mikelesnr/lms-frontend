@@ -23,22 +23,33 @@ export default function QuizSection({ lessonId, onSubmit }) {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
+    loadQuiz();
+  }, [lessonId]);
+
+  const loadQuiz = async () => {
     if (!lessonId) return;
 
     const token = Cookies.get("XSRF-TOKEN");
-    if (!token) return;
+    if (!token) {
+      console.warn("Missing CSRF token while loading quiz");
+      return;
+    }
 
-    api
-      .get(`/api/lessons/${lessonId}/quiz`, {
+    try {
+      const res = await api.get(`/api/lessons/${lessonId}/quiz`, {
         withCredentials: true,
         headers: {
           "X-XSRF-TOKEN": decodeURIComponent(token),
         },
-      })
-      .then((res) => setQuiz(res.data))
-      .catch((err) => console.error("Failed to load quiz", err))
-      .finally(() => setLoading(false));
-  }, [lessonId]);
+      });
+
+      setQuiz(res.data);
+    } catch (err) {
+      console.error("❌ Failed to load quiz:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (questionId, answerId) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answerId }));
@@ -46,51 +57,57 @@ export default function QuizSection({ lessonId, onSubmit }) {
 
   const handleSubmit = async () => {
     const token = Cookies.get("XSRF-TOKEN");
-    if (!token) return;
+    if (!token) {
+      console.warn("Missing CSRF token during submission");
+      return;
+    }
 
-    const payload = {
-      quiz_id: quiz.id,
-      answers: Object.entries(answers).map(([questionId, answerId]) => ({
-        question_id: Number(questionId),
-        answer_id: answerId,
-      })),
+    const { score, correct, total } = calculateScoreClientSide();
+
+    const completionPayload = {
+      lesson_id: lessonId,
+      grade: score,
     };
+
+    console.log("📤 Submitting grade payload:", completionPayload);
 
     try {
       setSubmitting(true);
 
-      // Step 1: Submit answers to get score
-      const res = await api.post("/api/completed-lessons", payload, {
+      const res = await api.post("/api/completed-lessons", completionPayload, {
         withCredentials: true,
         headers: {
           "X-XSRF-TOKEN": decodeURIComponent(token),
         },
       });
 
-      const resultData = res.data;
-      setResult(resultData);
+      console.log("✅ Lesson marked complete:", res.data);
 
-      // Step 2: Store grade + mark lesson as completed
-      await api.post(
-        "/api/completed-lessons",
-        {
-          lesson_id: lessonId,
-          grade: resultData.score,
-        },
-        {
-          withCredentials: true,
-          headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(token),
-          },
-        }
-      );
-
+      setResult({ score, correct, total });
       if (onSubmit) onSubmit();
     } catch (error) {
-      console.error("Quiz submission failed:", error);
+      console.error(
+        "❌ Grade submission failed:",
+        error.response?.data || error.message
+      );
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const calculateScoreClientSide = () => {
+    let correct = 0;
+    const total = quiz.questions.length;
+
+    quiz.questions.forEach((q) => {
+      const correctAnswer = q.answers.find((a) => a.is_correct);
+      if (answers[q.id] === correctAnswer?.id) {
+        correct++;
+      }
+    });
+
+    const score = Math.round((correct / total) * 100);
+    return { score, correct, total };
   };
 
   if (loading) return <LoadingOverlay visible />;
@@ -132,7 +149,8 @@ export default function QuizSection({ lessonId, onSubmit }) {
       ) : (
         <Box mt="md">
           <Title order={4}>
-            ✅ You scored {result.score}% ({result.correct}/{result.total})
+            ✅ You scored {result.score}% ({result.correct}/{result.total}{" "}
+            correct)
           </Title>
           <Flex mt="sm" gap="sm">
             <Button onClick={() => router.refresh()} variant="default">
