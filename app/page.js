@@ -1,95 +1,110 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import {
+  Container,
+  Title,
+  Text,
+  Button,
+  SimpleGrid,
+  Divider,
+  Group,
+  Center,
+  Stack,
+} from "@mantine/core";
+import {
+  IconBook2,
+  IconRocket,
+  IconUserPlus,
+  IconArrowRight,
+  IconLogin,
+} from "@tabler/icons-react";
+import Link from "next/link";
+import FeaturedCourses from "@/components/courses/FeaturedCourses";
+
+export default function HomePage() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <Container size="lg" pt="xl">
+      {/* Hero */}
+      <Title order={1} fw={900} ta="center">
+        Empower Your Learning Journey 🚀
+      </Title>
+      <Text ta="center" mt="sm" mb="xl" c="dimmed">
+        Explore industry-ready courses in coding, business, and beyond. Learn at
+        your own pace. Track your progress. Build your future.
+      </Text>
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      <Stack align="center" spacing="sm" mb="xl">
+        <Button
+          component={Link}
+          href="/auth/register"
+          size="md"
+          radius="md"
+          leftSection={<IconUserPlus size={18} />}
+          variant="filled"
+          color="teal"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Sign Up & Start Learning
+        </Button>
+        <Button
+          component={Link}
+          href="/auth/login"
+          variant="subtle"
+          size="xs"
+          leftSection={<IconLogin size={16} />}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Already have an account? Log in
+        </Button>
+      </Stack>
+
+      {/* 🔥 Featured Courses */}
+      <FeaturedCourses />
+
+      {/* CTA to View All Courses */}
+      <Center mt="lg">
+        <Button
+          component={Link}
+          href="/courses"
+          variant="outline"
+          rightSection={<IconArrowRight size={18} />}
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          View All Courses
+        </Button>
+      </Center>
+
+      {/* 📦 Benefits */}
+      <Divider label="📦 Why Choose Us" labelPosition="center" my="xl" />
+
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
+        <Benefit
+          icon={<IconBook2 size={32} />}
+          title="Expert Content"
+          description="Courses built by experienced instructors from industry and academia."
+        />
+        <Benefit
+          icon={<IconRocket size={32} />}
+          title="Track Your Progress"
+          description="Real-time quiz feedback and progress tracking keep you motivated."
+        />
+        <Benefit
+          icon={<IconUserPlus size={32} />}
+          title="Flexible & Accessible"
+          description="Learn at your own pace on any device, anywhere in the world."
+        />
+      </SimpleGrid>
+    </Container>
+  );
+}
+
+function Benefit({ icon, title, description }) {
+  return (
+    <div>
+      {icon}
+      <Title order={4} mt="md">
+        {title}
+      </Title>
+      <Text c="dimmed" size="sm">
+        {description}
+      </Text>
     </div>
   );
 }
