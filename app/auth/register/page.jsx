@@ -8,46 +8,36 @@ import {
   Button,
   Stack,
   Text,
+  Select,
 } from "@mantine/core";
-import api from "@/lib/api";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest"; // 🆕 import the hook
 
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [role, setRole] = useState("student");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { sanctumPost } = useSanctumRequest();
 
   const handleRegister = async () => {
     setLoading(true);
     setError("");
 
     try {
-      await api.get("/sanctum/csrf-cookie"); // 🍪 sets XSRF-TOKEN + session cookie
+      await sanctumPost("/api/auth/register", {
+        name,
+        email,
+        password,
+        role,
+        password_confirmation: passwordConfirmation,
+      });
 
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-      console.log("CSRF Token (from cookie):", xsrfToken);
-
-      await api.post(
-        "/auth/register",
-        {
-          name,
-          email,
-          password,
-          password_confirmation: passwordConfirmation,
-        },
-        {
-          headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
-          },
-        }
-      );
-
-      router.push("/dashboard");
+      router.push("/auth/verify-email"); // 🔁 verification prompt
     } catch (err) {
       console.error("Registration failed:", err);
       setError("Invalid input or CSRF mismatch");
@@ -90,6 +80,17 @@ export default function RegisterPage() {
           placeholder="you@example.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+
+        <Select
+          label="Role"
+          data={[
+            { value: "student", label: "Student" },
+            { value: "instructor", label: "Instructor" },
+          ]}
+          value={role}
+          onChange={setRole}
           required
         />
 

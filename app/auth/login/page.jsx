@@ -9,9 +9,8 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import api from "@/lib/api";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,28 +18,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { sanctumPost } = useSanctumRequest();
 
   const handleLogin = async () => {
     setLoading(true);
     setError("");
 
     try {
-      // Step 1: Get the CSRF cookie
-      await api.get("/sanctum/csrf-cookie");
-
-      // Step 2: Grab the token from the cookie
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-
-      // Step 3: Send login request with token in headers
-      const response = await api.post(
-        "/auth/login",
-        { email, password },
-        {
-          headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(Cookies.get("XSRF-TOKEN")),
-          },
-        }
-      );
+      const response = await sanctumPost("/api/auth/login", {
+        email,
+        password,
+      });
 
       const role = response.data.role;
       if (role === "admin") {
