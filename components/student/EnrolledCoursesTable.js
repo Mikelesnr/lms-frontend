@@ -1,30 +1,66 @@
-"use client";
-import { Table, Text } from "@mantine/core";
+import { Table, Progress, Button, Flex, Text } from "@mantine/core";
 
-export default function EnrolledCoursesTable() {
-  const courses = [
-    { id: 1, title: "React Basics", progress: "75%" },
-    { id: 2, title: "Laravel Crash Course", progress: "40%" },
-  ];
-
-  if (courses.length === 0)
-    return <Text c="dimmed">You’re not enrolled in any courses yet.</Text>;
-
+export default function EnrolledCoursesTable({ courses = [] }) {
   return (
-    <Table striped withTableBorder highlightOnHover mt="md">
+    <Table striped highlightOnHover>
       <thead>
         <tr>
-          <th>Course</th>
-          <th>Progress</th>
+          <th style={{ textAlign: "left", padding: 10 }}>Course</th>
+          <th style={{ textAlign: "left", padding: 10 }}>Instructor</th>
+          <th style={{ textAlign: "left", padding: 10 }}>Progress</th>
+          <th style={{ textAlign: "left", padding: 10, padding: "0 30px" }}>
+            Continue
+          </th>
         </tr>
       </thead>
       <tbody>
-        {courses.map((course) => (
-          <tr key={course.id}>
-            <td>{course.title}</td>
-            <td>{course.progress}</td>
-          </tr>
-        ))}
+        {courses.map((course) => {
+          const progress = course.progress || 0; // fallback
+          const nextLesson = course.next_lesson;
+
+          return (
+            <tr key={course.id}>
+              <td>{course.title}</td>
+              <td>{course.instructor?.name}</td>
+              <td>
+                <Flex align="center" gap="sm" style={{ maxWidth: 200 }}>
+                  <Progress
+                    value={course.progress}
+                    size="sm"
+                    radius="xl"
+                    w="100%"
+                    color={course.progress === 100 ? "green" : "blue"}
+                  />
+                  <Text
+                    size="sm"
+                    c={course.progress === 100 ? "green" : "dimmed"}
+                    fw={500}
+                  >
+                    {course.progress}%
+                  </Text>
+                </Flex>
+              </td>
+              <td style={{ alignContent: "center" }}>
+                {course.progress === 100 ? (
+                  <Text size="sm" color="green">
+                    🎉 Completed
+                  </Text>
+                ) : (
+                  <Button
+                    size="xs"
+                    component="a"
+                    style={{ textAlign: "center", margin: "5px 30px" }}
+                    href={`/lessons/${course.next_lesson?.id}`}
+                    variant="light"
+                    color="blue"
+                  >
+                    Resume
+                  </Button>
+                )}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </Table>
   );
