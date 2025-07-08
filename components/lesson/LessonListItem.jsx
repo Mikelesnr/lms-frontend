@@ -37,5 +37,6 @@ export default function LessonListItem({ lesson, onEdit, onDelete, onSelect }) {
         </Group>
       </Group>
     </Card>
+    
   );
 }
