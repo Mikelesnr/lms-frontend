@@ -1,29 +1,26 @@
 "use client";
+
 import { useState } from "react";
 import { TextInput, Button, Group } from "@mantine/core";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
-export default function AddQuizForm({ lessonId, onCreated }) {
+export default function AddQuizForm({ lessonId, onCreated, opened, onClose }) {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const { sanctumPost } = useSanctumRequest();
 
   const handleCreate = async () => {
     setLoading(true);
     try {
-      await api.get("/sanctum/csrf-cookie");
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-      await api.post(
-        "/api/quizzes",
-        { title, lesson_id: lessonId },
-        {
-          headers: { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) },
-        }
-      );
+      const res = await sanctumPost(`/api/quizzes`, {
+        title,
+        lesson_id: lessonId,
+      });
       setTitle("");
-      onCreated();
+      onCreated?.(res.data);
+      onClose?.();
     } catch (err) {
-      console.error("Quiz creation failed", err);
+      console.error("Quiz creation failed:", err);
     } finally {
       setLoading(false);
     }

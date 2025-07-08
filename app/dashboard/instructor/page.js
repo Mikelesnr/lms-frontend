@@ -8,6 +8,8 @@ import {
   Group,
   Box,
   Button,
+  Text,
+  Loader,
 } from "@mantine/core";
 import {
   IconBook,
@@ -20,9 +22,11 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import CoursesTable from "@/components/instructor/CoursesTable";
 import QuizAnalytics from "@/components/instructor/QuizAnalytics";
 import StudentsTable from "@/components/instructor/StudentsTable";
+import useInstructorStats from "@/lib/hooks/useInstructorStats";
 
 export default function InstructorDashboard() {
   const [view, setView] = useState("overview");
+  const { stats, loading: statsLoading } = useInstructorStats();
 
   const data = [
     { id: 1, title: "Intro to JavaScript", students: 34 },
@@ -64,13 +68,36 @@ export default function InstructorDashboard() {
       {view === "overview" && (
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg" mt="md">
           <Card shadow="sm" padding="lg" radius="md">
-            📘 4 Courses
+            <Text size="sm" c="dimmed">
+              📘 Courses
+            </Text>
+            {statsLoading ? (
+              <Loader size="xs" mt="sm" />
+            ) : (
+              <Title order={3}>{stats?.courses ?? 0}</Title>
+            )}
           </Card>
+
           <Card shadow="sm" padding="lg" radius="md">
-            👥 87 Students
+            <Text size="sm" c="dimmed">
+              👥 Active Students
+            </Text>
+            {statsLoading ? (
+              <Loader size="xs" mt="sm" />
+            ) : (
+              <Title order={3}>{stats?.active_students ?? 0}</Title>
+            )}
           </Card>
+
           <Card shadow="sm" padding="lg" radius="md">
-            🎓 24 Lessons
+            <Text size="sm" c="dimmed">
+              🎓 Lessons
+            </Text>
+            {statsLoading ? (
+              <Loader size="xs" mt="sm" />
+            ) : (
+              <Title order={3}>{stats?.lessons ?? 0}</Title>
+            )}
           </Card>
         </SimpleGrid>
       )}
