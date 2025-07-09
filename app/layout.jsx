@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { ColorSchemeScript } from "@mantine/core";
 import ClientLayout from "@/context/client-layout";
-import { AuthProvider } from "@/context/AuthProvider";
+
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -23,11 +23,9 @@ export default function RootLayout({ children }) {
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable}`}
-        suppressHydrationWarning
+        // suppressHydrationWarning
       >
-        <AuthProvider>
-          <ClientLayout>{children}</ClientLayout>
-        </AuthProvider>
+        <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
   );

@@ -1,34 +1,41 @@
+"use client";
+
 import { Card, Image, Text, Button, Badge, Group, Flex } from "@mantine/core";
 import Link from "next/link";
 import { useState } from "react";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
-import { useAuth } from "@/context/useAuth";
 import { useRouter } from "next/navigation";
-export default function CourseCard({ course }) {
+
+export default function CourseCard({ course, user }) {
   const [enrolled, setEnrolled] = useState(course.enrolled || false);
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
   const router = useRouter();
+
   const handleEnroll = async () => {
     if (!user) {
       alert("Please log in as a student to enroll.");
-      router.push("/login");
+      router.push("/auth/login");
       return;
     }
+
     if (user.role !== "student") {
       alert("You must be logged in as a student to enroll.");
       return;
     }
+
     const xsrf = Cookies.get("XSRF-TOKEN");
     setLoading(true);
+
     try {
       await api.post(
         "/api/my/enrollments",
         { course_id: course.id },
         {
           withCredentials: true,
-          headers: { "X-XSRF-TOKEN": decodeURIComponent(xsrf) },
+          headers: {
+            "X-XSRF-TOKEN": decodeURIComponent(xsrf),
+          },
         }
       );
       setEnrolled(true);
@@ -39,27 +46,25 @@ export default function CourseCard({ course }) {
       setLoading(false);
     }
   };
+
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
-      {" "}
       <Card.Section>
-        {" "}
-        <Image src={course.image_url || "/placeholder.jpg"} height={140} />{" "}
-      </Card.Section>{" "}
+        <Image src={course.image_url || "/placeholder.jpg"} height={140} />
+      </Card.Section>
+
       <Group justify="space-between" mt="md" mb="xs">
-        {" "}
-        <Text fw={600}>{course.title}</Text>{" "}
+        <Text fw={600}>{course.title}</Text>
         <Badge color="teal" variant="light">
-          {" "}
-          {course.category || "General"}{" "}
-        </Badge>{" "}
-      </Group>{" "}
+          {course.category || "General"}
+        </Badge>
+      </Group>
+
       <Text size="sm" c="dimmed" lineClamp={3}>
-        {" "}
-        {course.description}{" "}
-      </Text>{" "}
+        {course.description}
+      </Text>
+
       <Flex mt="md" justify="space-between">
-        {" "}
         <Button
           variant="light"
           color="blue"
@@ -67,13 +72,12 @@ export default function CourseCard({ course }) {
           component={Link}
           href={`/courses/${course.id}`}
         >
-          {" "}
-          View Details{" "}
-        </Button>{" "}
+          View Details
+        </Button>
+
         {enrolled ? (
           <Badge color="green" size="sm" variant="filled">
-            {" "}
-            Enrolled{" "}
+            Enrolled
           </Badge>
         ) : (
           <Button
@@ -83,11 +87,10 @@ export default function CourseCard({ course }) {
             loading={loading}
             onClick={handleEnroll}
           >
-            {" "}
-            Enroll{" "}
+            Enroll
           </Button>
-        )}{" "}
-      </Flex>{" "}
+        )}
+      </Flex>
     </Card>
   );
 }
