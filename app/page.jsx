@@ -20,7 +20,7 @@ import {
   IconLogout,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/useAuth";
 import FeaturedCourses from "@/components/courses/FeaturedCourses";
 import useLogout from "@/lib/hooks/useLogout";
 

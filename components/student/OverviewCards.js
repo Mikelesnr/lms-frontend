@@ -28,7 +28,7 @@ export default function StudentOverviewCards() {
     };
 
     fetchStats();
-  }, []);
+  }, [sanctumGet]);
 
   if (error) {
     return (
@@ -57,7 +57,7 @@ export default function StudentOverviewCards() {
           <Text size="xl">{enrollments}</Text>
         </Group>
         <Text size="xs" c="dimmed" mt="sm">
-          Total courses you're currently enrolled in
+          {`Total courses you're currently enrolled in`}
         </Text>
       </Card>
 
@@ -69,7 +69,7 @@ export default function StudentOverviewCards() {
           <Text size="xl">{quizzes}</Text>
         </Group>
         <Text size="xs" c="dimmed" mt="sm">
-          Cumulative quizzes you've passed
+          {`Cumulative quizzes you've passed`}
         </Text>
       </Card>
     </SimpleGrid>

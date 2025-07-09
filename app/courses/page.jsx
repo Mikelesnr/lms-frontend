@@ -17,7 +17,7 @@ import { IconSearch, IconAlertCircle } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/useAuth";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 import api from "@/lib/api";
 import CourseCard from "@/components/courses/CourseCard";

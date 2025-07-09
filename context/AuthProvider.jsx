@@ -1,11 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { Button } from "@mantine/core";
-import { useRouter } from "next/navigation";
+import { createContext, useEffect, useState } from "react";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const { sanctumGet } = useSanctumRequest();
@@ -17,7 +15,7 @@ export function AuthProvider({ children }) {
       try {
         const res = await sanctumGet("/api/user");
         setUser(res.data);
-      } catch (err) {
+      } catch {
         setUser(null);
       } finally {
         setLoading(false);
@@ -25,7 +23,7 @@ export function AuthProvider({ children }) {
     };
 
     fetchUser();
-  }, []);
+  }, [sanctumGet]);
 
   return (
     <AuthContext.Provider value={{ user, setUser, role: user?.role, loading }}>
@@ -34,28 +32,4 @@ export function AuthProvider({ children }) {
   );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
-
-export function LogoutButton() {
-  const router = useRouter();
-  const { logout } = useSanctumRequest();
-  const { setUser } = useAuth();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setUser(null);
-      router.push("/auth/login");
-    } catch (err) {
-      console.error("Logout failed:", err);
-    }
-  };
-
-  return (
-    <Button color="red" onClick={handleLogout}>
-      Logout
-    </Button>
-  );
-}
+export default AuthContext;

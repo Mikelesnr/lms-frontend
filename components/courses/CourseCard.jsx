@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import api from "@/lib/api";
 import Cookies from "js-cookie";
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/useAuth";
 import { useRouter } from "next/navigation";
 export default function CourseCard({ course }) {
   const [enrolled, setEnrolled] = useState(course.enrolled || false);

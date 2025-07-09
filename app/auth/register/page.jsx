@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/useAuth";
 
 export default function RegisterPage() {
   const router = useRouter();
