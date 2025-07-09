@@ -89,7 +89,7 @@ export default function HomePage() {
       )}
 
       {/* Featured Courses */}
-      <FeaturedCourses />
+      <FeaturedCourses user={user} />
 
       {/* View All Courses CTA */}
       <Center mt="lg">

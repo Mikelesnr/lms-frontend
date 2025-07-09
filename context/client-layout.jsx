@@ -3,6 +3,7 @@
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
 import { useEffect } from "react";
+import { AuthProvider } from "@/context/AuthProvider";
 import api from "@/lib/api";
 
 export default function ClientLayout({ children }) {
@@ -16,7 +17,7 @@ export default function ClientLayout({ children }) {
       withNormalizeCSS
       defaultColorScheme="auto"
     >
-      {children}
+      <AuthProvider>{children}</AuthProvider>
     </MantineProvider>
   );
 }

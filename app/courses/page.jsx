@@ -43,7 +43,6 @@ export default function AllCoursesPage() {
     const fetchCategories = async () => {
       try {
         const res = await api.get("/api/courses/categories");
-        // Store full category objects: { id, name }
         setCategoryOptions(res.data || []);
       } catch (err) {
         console.error("Failed to load categories:", err);
@@ -218,7 +217,7 @@ export default function AllCoursesPage() {
         <>
           <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
             {courses.map((course) => (
-              <CourseCard key={course.id} course={course} />
+              <CourseCard key={course.id} course={course} user={user} />
             ))}
           </SimpleGrid>
 

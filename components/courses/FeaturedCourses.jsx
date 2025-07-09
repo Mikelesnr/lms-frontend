@@ -1,18 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Divider,
-  SimpleGrid,
-  Text,
-  Loader,
-  Title,
-  Center,
-} from "@mantine/core";
+import { Divider, SimpleGrid, Text, Loader, Center } from "@mantine/core";
 import CourseCard from "./CourseCard";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
-export default function FeaturedCourses() {
+export default function FeaturedCourses({ user }) {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
   const { sanctumGet } = useSanctumRequest();
@@ -25,7 +18,7 @@ export default function FeaturedCourses() {
         setFeatured([]);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [sanctumGet]);
 
   return (
     <div style={{ marginTop: "3rem" }}>
@@ -38,7 +31,7 @@ export default function FeaturedCourses() {
       ) : featured.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
           {featured.map((course) => (
-            <CourseCard key={course.id} course={course} />
+            <CourseCard key={course.id} course={course} user={user} />
           ))}
         </SimpleGrid>
       ) : (
