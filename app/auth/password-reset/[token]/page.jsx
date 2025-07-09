@@ -29,7 +29,9 @@ export default function ResetPasswordPage({ params }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     try {
       await sanctumPost("/api/auth/reset-password", {
         ...form,
@@ -47,17 +49,20 @@ export default function ResetPasswordPage({ params }) {
       <Title order={3} mb="sm">
         Reset Your Password
       </Title>
+
       {success ? (
         <Notification color="green">
           Password reset successful! You may now log in.
         </Notification>
       ) : (
-        <>
+        <form onSubmit={handleSubmit}>
           <TextInput
             label="Email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.currentTarget.value })}
+            required
           />
+
           <PasswordInput
             label="New Password"
             value={form.password}
@@ -65,24 +70,32 @@ export default function ResetPasswordPage({ params }) {
               setForm({ ...form, password: e.currentTarget.value })
             }
             mt="md"
+            required
           />
+
           <PasswordInput
             label="Confirm Password"
             value={form.password_confirmation}
             onChange={(e) =>
-              setForm({ ...form, password_confirmation: e.currentTarget.value })
+              setForm({
+                ...form,
+                password_confirmation: e.currentTarget.value,
+              })
             }
             mt="md"
+            required
           />
-          <Button fullWidth mt="lg" onClick={handleSubmit}>
+
+          <Button fullWidth type="submit" mt="lg">
             Reset Password
           </Button>
+
           {error && (
             <Text color="red" size="sm" mt="sm">
               {error}
             </Text>
           )}
-        </>
+        </form>
       )}
     </Card>
   );

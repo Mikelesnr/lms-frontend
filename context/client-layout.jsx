@@ -12,12 +12,14 @@ export default function ClientLayout({ children }) {
   }, []);
 
   return (
-    <MantineProvider
-      withGlobalStyles
-      withNormalizeCSS
-      defaultColorScheme="auto"
-    >
-      <AuthProvider>{children}</AuthProvider>
-    </MantineProvider>
+    <AuthProvider>
+      <MantineProvider
+        withGlobalStyles
+        withNormalizeCSS
+        defaultColorScheme="auto"
+      >
+        {children}
+      </MantineProvider>
+    </AuthProvider>
   );
 }
