@@ -33,8 +33,7 @@ export default function StudentQuizAnalytics() {
     };
 
     fetchAnalytics();
-  }, []);
-
+  });
   if (loading) return <Loader mt="xl" />;
   if (loadError)
     return (

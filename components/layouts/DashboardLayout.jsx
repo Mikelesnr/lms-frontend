@@ -15,7 +15,7 @@ import {
   Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/useAuth";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 import { useRouter } from "next/navigation";
 

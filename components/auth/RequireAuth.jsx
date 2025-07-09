@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/useAuth";
 import { useRouter } from "next/navigation";
 import { Loader, Center } from "@mantine/core";
 import { useEffect } from "react";

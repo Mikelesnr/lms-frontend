@@ -10,7 +10,7 @@ import {
   Text,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthProvider";
+import { useAuth } from "@/context/useAuth";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function LoginPage() {
