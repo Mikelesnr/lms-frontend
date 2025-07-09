@@ -27,14 +27,15 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔐 Redirect if already logged in
   useEffect(() => {
     if (user?.role) {
       router.replace(`/dashboard/${user.role}`);
     }
   }, [user, router]);
 
-  const handleRegister = async () => {
+  const handleRegister = async (e) => {
+    e.preventDefault();
+
     setLoading(true);
     setError("");
 
@@ -66,74 +67,76 @@ export default function RegisterPage() {
       mx="auto"
       mt="xl"
     >
-      <Stack>
-        <Text size="lg" fw={600}>
-          Register
-        </Text>
-
-        {error && (
-          <Text c="red" size="sm">
-            {error}
+      <form onSubmit={handleRegister}>
+        <Stack>
+          <Text size="lg" fw={600}>
+            Register
           </Text>
-        )}
 
-        <TextInput
-          label="Name"
-          placeholder="Jane Doe"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
+          {error && (
+            <Text color="red" size="sm">
+              {error}
+            </Text>
+          )}
 
-        <TextInput
-          label="Email"
-          placeholder="you@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+          <TextInput
+            label="Name"
+            placeholder="Jane Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
 
-        <Select
-          label="Role"
-          data={[
-            { value: "student", label: "Student" },
-            { value: "instructor", label: "Instructor" },
-          ]}
-          value={role}
-          onChange={setRole}
-          required
-        />
+          <TextInput
+            label="Email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <PasswordInput
-          label="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+          <Select
+            label="Role"
+            data={[
+              { value: "student", label: "Student" },
+              { value: "instructor", label: "Instructor" },
+            ]}
+            value={role}
+            onChange={setRole}
+            required
+          />
 
-        <PasswordInput
-          label="Confirm Password"
-          value={passwordConfirmation}
-          onChange={(e) => setPasswordConfirmation(e.target.value)}
-          required
-        />
+          <PasswordInput
+            label="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
-        <Button fullWidth onClick={handleRegister} loading={loading}>
-          Register
-        </Button>
+          <PasswordInput
+            label="Confirm Password"
+            value={passwordConfirmation}
+            onChange={(e) => setPasswordConfirmation(e.target.value)}
+            required
+          />
 
-        <Text
-          component="a"
-          href="/auth/login"
-          size="sm"
-          ta="center"
-          c="blue"
-          mt="sm"
-          style={{ textDecoration: "underline", cursor: "pointer" }}
-        >
-          Already have an account? Log in
-        </Text>
-      </Stack>
+          <Button fullWidth type="submit" loading={loading}>
+            Register
+          </Button>
+
+          <Text
+            component="a"
+            href="/auth/login"
+            size="sm"
+            ta="center"
+            color="blue"
+            mt="sm"
+            style={{ textDecoration: "underline", cursor: "pointer" }}
+          >
+            Already have an account? Log in
+          </Text>
+        </Stack>
+      </form>
     </Paper>
   );
 }

@@ -17,7 +17,9 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState("");
   const { sanctumPost } = useSanctumRequest();
 
-  const handleRequest = async () => {
+  const handleRequest = async (e) => {
+    if (e) e.preventDefault();
+
     try {
       await sanctumPost("/api/auth/forgot-password", { email });
       setSent(true);
@@ -33,27 +35,31 @@ export default function ForgotPasswordPage() {
       <Title order={3} mb="sm">
         Forgot Password
       </Title>
+
       {sent ? (
         <Notification color="green">
           Reset link sent to your email.
         </Notification>
       ) : (
-        <>
+        <form onSubmit={handleRequest}>
           <TextInput
             label="Email"
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.currentTarget.value)}
+            required
           />
-          <Button fullWidth mt="md" onClick={handleRequest}>
+
+          <Button fullWidth type="submit" mt="md">
             Send Reset Link
           </Button>
+
           {error && (
             <Text color="red" size="sm" mt="sm">
               {error}
             </Text>
           )}
-        </>
+        </form>
       )}
     </Card>
   );
