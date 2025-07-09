@@ -10,17 +10,27 @@ import {
   Loader,
   Alert,
   Center,
+  Button,
+  Group,
 } from "@mantine/core";
 import { IconSearch, IconAlertCircle } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { useDebouncedValue } from "@mantine/hooks"; // ✅ Debounce hook
+import { useDebouncedValue } from "@mantine/hooks";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/context/AuthProvider";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 import api from "@/lib/api";
 import CourseCard from "@/components/courses/CourseCard";
 
 export default function AllCoursesPage() {
+  const { user, setUser } = useAuth();
+  const { sanctumPost } = useSanctumRequest();
+  const router = useRouter();
+  const pathname = usePathname();
+
   const [courses, setCourses] = useState([]);
   const [search, setSearch] = useState("");
-  const [debouncedSearch] = useDebouncedValue(search, 300); // ✅ Debounce search
+  const [debouncedSearch] = useDebouncedValue(search, 300);
   const [category, setCategory] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -29,11 +39,11 @@ export default function AllCoursesPage() {
   const [error, setError] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
 
-  // ✅ Load categories once on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await api.get("/api/courses/categories");
+        // Store full category objects: { id, name }
         setCategoryOptions(res.data || []);
       } catch (err) {
         console.error("Failed to load categories:", err);
@@ -41,11 +51,9 @@ export default function AllCoursesPage() {
         setLoadingCategories(false);
       }
     };
-
     fetchCategories();
   }, []);
 
-  // ✅ Load courses when filters or debounced search changes
   useEffect(() => {
     const fetchCourses = async () => {
       setLoadingCourses(true);
@@ -53,12 +61,9 @@ export default function AllCoursesPage() {
         const res = await api.get("/api/courses/all", {
           params: { search: debouncedSearch, category, page },
         });
-
         setCourses(res.data.data || []);
-
         const lastPage = res.data?.meta?.last_page ?? res.data?.last_page;
         setTotalPages(Number.isInteger(lastPage) ? lastPage : 1);
-
         setError(null);
       } catch (err) {
         console.error("Error fetching courses:", err);
@@ -68,7 +73,6 @@ export default function AllCoursesPage() {
         setLoadingCourses(false);
       }
     };
-
     fetchCourses();
   }, [debouncedSearch, category, page]);
 
@@ -77,13 +81,94 @@ export default function AllCoursesPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleLogout = async () => {
+    try {
+      await sanctumPost("/api/auth/logout");
+      setUser(null);
+      if (pathname.startsWith("/dashboard")) {
+        router.push("/auth/login");
+      }
+    } catch (err) {
+      console.error("Logout failed", err);
+      alert("Logout failed. Please try again.");
+    }
+  };
+
   return (
     <Container my="lg">
+      {/* 🧭 Navigation Header */}
+      <Group justify="space-between" mb="md">
+        <Group spacing="xs">
+          <Button
+            component="a"
+            href="/"
+            variant="subtle"
+            size="xs"
+            leftSection="🏠"
+          >
+            Home
+          </Button>
+          <Button
+            component="a"
+            href="/courses"
+            variant="subtle"
+            size="xs"
+            leftSection="📚"
+          >
+            Courses
+          </Button>
+          {user?.role && (
+            <Button
+              component="a"
+              href={`/dashboard/${user.role}`}
+              variant="subtle"
+              size="xs"
+              leftSection="📊"
+            >
+              Dashboard
+            </Button>
+          )}
+        </Group>
+
+        <Group spacing="xs">
+          {user ? (
+            <Button
+              variant="light"
+              color="red"
+              size="xs"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          ) : (
+            <>
+              <Button
+                component="a"
+                href="/auth/login"
+                variant="outline"
+                size="xs"
+              >
+                Log In
+              </Button>
+              <Button
+                component="a"
+                href="/auth/register"
+                variant="filled"
+                color="teal"
+                size="xs"
+              >
+                Sign Up
+              </Button>
+            </>
+          )}
+        </Group>
+      </Group>
+
+      {/* 🔍 Filters */}
       <Title order={2} mb="md">
         📚 All Courses
       </Title>
 
-      {/* Filters */}
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" mb="lg">
         <TextInput
           placeholder="Search by course title"
@@ -109,7 +194,7 @@ export default function AllCoursesPage() {
         />
       </SimpleGrid>
 
-      {/* Results */}
+      {/* 📦 Results */}
       {loadingCourses ? (
         <Center mt="xl">
           <Loader />

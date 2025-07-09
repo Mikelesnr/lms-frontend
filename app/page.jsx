@@ -7,9 +7,9 @@ import {
   Button,
   SimpleGrid,
   Divider,
-  Group,
   Center,
   Stack,
+  Group,
 } from "@mantine/core";
 import {
   IconBook2,
@@ -17,11 +17,19 @@ import {
   IconUserPlus,
   IconArrowRight,
   IconLogin,
+  IconLogout,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthProvider";
 import FeaturedCourses from "@/components/courses/FeaturedCourses";
+import useLogout from "@/lib/hooks/useLogout";
 
 export default function HomePage() {
+  const { user, loading } = useAuth();
+  const logout = useLogout();
+
+  if (loading) return null;
+
   return (
     <Container size="lg" pt="xl">
       {/* Hero */}
@@ -33,33 +41,57 @@ export default function HomePage() {
         your own pace. Track your progress. Build your future.
       </Text>
 
-      <Stack align="center" spacing="sm" mb="xl">
-        <Button
-          component={Link}
-          href="/auth/register"
-          size="md"
-          radius="md"
-          leftSection={<IconUserPlus size={18} />}
-          variant="filled"
-          color="teal"
-        >
-          Sign Up & Start Learning
-        </Button>
-        <Button
-          component={Link}
-          href="/auth/login"
-          variant="subtle"
-          size="xs"
-          leftSection={<IconLogin size={16} />}
-        >
-          Already have an account? Log in
-        </Button>
-      </Stack>
+      {/* Auth Actions */}
+      {!user ? (
+        <Stack align="center" spacing="sm" mb="xl">
+          <Button
+            component={Link}
+            href="/auth/register"
+            size="md"
+            radius="md"
+            leftSection={<IconUserPlus size={18} />}
+            variant="filled"
+            color="teal"
+          >
+            Sign Up & Start Learning
+          </Button>
+          <Button
+            component={Link}
+            href="/auth/login"
+            variant="subtle"
+            size="xs"
+            leftSection={<IconLogin size={16} />}
+          >
+            Already have an account? Log in
+          </Button>
+        </Stack>
+      ) : (
+        <Center mb="xl">
+          <Group gap="xs">
+            <Button
+              component={Link}
+              href={`/dashboard/${user.role}`}
+              variant="light"
+              color="blue"
+              leftSection="📊"
+            >
+              Dashboard
+            </Button>
+            <Button
+              color="red"
+              onClick={logout}
+              leftSection={<IconLogout size={16} />}
+            >
+              Logout
+            </Button>
+          </Group>
+        </Center>
+      )}
 
-      {/* 🔥 Featured Courses */}
+      {/* Featured Courses */}
       <FeaturedCourses />
 
-      {/* CTA to View All Courses */}
+      {/* View All Courses CTA */}
       <Center mt="lg">
         <Button
           component={Link}
@@ -71,7 +103,7 @@ export default function HomePage() {
         </Button>
       </Center>
 
-      {/* 📦 Benefits */}
+      {/* Benefits Section */}
       <Divider label="📦 Why Choose Us" labelPosition="center" my="xl" />
 
       <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">

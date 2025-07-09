@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TextInput,
   PasswordInput,
@@ -11,10 +11,14 @@ import {
   Select,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest"; // 🆕 import the hook
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuth } from "@/context/AuthProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { sanctumPost } = useSanctumRequest();
+
   const [name, setName] = useState("");
   const [role, setRole] = useState("student");
   const [email, setEmail] = useState("");
@@ -22,7 +26,13 @@ export default function RegisterPage() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { sanctumPost } = useSanctumRequest();
+
+  // 🔐 Redirect if already logged in
+  useEffect(() => {
+    if (user?.role) {
+      router.replace(`/dashboard/${user.role}`);
+    }
+  }, [user, router]);
 
   const handleRegister = async () => {
     setLoading(true);
@@ -37,7 +47,7 @@ export default function RegisterPage() {
         password_confirmation: passwordConfirmation,
       });
 
-      router.push("/auth/verify-email"); // 🔁 verification prompt
+      router.push("/auth/verify-email");
     } catch (err) {
       console.error("Registration failed:", err);
       setError("Invalid input or CSRF mismatch");
@@ -111,6 +121,18 @@ export default function RegisterPage() {
         <Button fullWidth onClick={handleRegister} loading={loading}>
           Register
         </Button>
+
+        <Text
+          component="a"
+          href="/auth/login"
+          size="sm"
+          ta="center"
+          c="blue"
+          mt="sm"
+          style={{ textDecoration: "underline", cursor: "pointer" }}
+        >
+          Already have an account? Log in
+        </Text>
       </Stack>
     </Paper>
   );
