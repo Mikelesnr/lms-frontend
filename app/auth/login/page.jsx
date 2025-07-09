@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TextInput,
   PasswordInput,
@@ -10,15 +10,25 @@ import {
   Text,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthProvider";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { user, setUser } = useAuth();
+  const { sanctumPost } = useSanctumRequest();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { sanctumPost } = useSanctumRequest();
+
+  // 🔐 Redirect if already logged in
+  useEffect(() => {
+    if (user?.role) {
+      router.replace(`/dashboard/${user.role}`);
+    }
+  }, [user, router]);
 
   const handleLogin = async () => {
     setLoading(true);
@@ -30,14 +40,11 @@ export default function LoginPage() {
         password,
       });
 
-      const role = response.data.role;
-      if (role === "admin") {
-        router.push("/dashboard/admin");
-      } else if (role === "instructor") {
-        router.push("/dashboard/instructor");
-      } else {
-        router.push("/dashboard/student");
-      }
+      const { user } = response.data;
+      setUser(user);
+
+      const rolePath = `/dashboard/${user.role || "student"}`;
+      router.push(rolePath);
     } catch (err) {
       console.error("Login failed:", err);
       setError("Invalid credentials or server error");
@@ -83,9 +90,32 @@ export default function LoginPage() {
           required
         />
 
+        <Button
+          variant="subtle"
+          size="xs"
+          color="blue"
+          mt="xs"
+          onClick={() => router.push("/auth/forgot-password")}
+          style={{ alignSelf: "flex-end" }}
+        >
+          Forgot password?
+        </Button>
+
         <Button fullWidth onClick={handleLogin} loading={loading}>
           Log In
         </Button>
+
+        <Text
+          component="a"
+          href="/auth/register"
+          size="sm"
+          ta="center"
+          c="blue"
+          mt="sm"
+          style={{ textDecoration: "underline", cursor: "pointer" }}
+        >
+          Don’t have an account? Sign up
+        </Text>
       </Stack>
     </Paper>
   );

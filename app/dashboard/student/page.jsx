@@ -14,6 +14,7 @@ import StudentOverviewCards from "@/components/student/OverviewCards";
 import EnrolledCoursesTable from "@/components/student/EnrolledCoursesTable";
 import StudentQuizAnalytics from "@/components/student/QuizAnalytics";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import RequireAuth from "@/components/auth/RequireAuth";
 
 export default function StudentDashboard() {
   const [view, setView] = useState("overview");
@@ -92,8 +93,10 @@ export default function StudentDashboard() {
   };
 
   return (
-    <DashboardLayout title="Student Dashboard" navbar={navbar}>
-      {renderContent()}
-    </DashboardLayout>
+    <RequireAuth role="student">
+      <DashboardLayout title="Student Dashboard" navbar={navbar}>
+        {renderContent()}
+      </DashboardLayout>
+    </RequireAuth>
   );
 }
