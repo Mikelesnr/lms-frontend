@@ -2,36 +2,42 @@
 
 import { useEffect, useState } from "react";
 import { Table, Text, Loader, Button, Box } from "@mantine/core";
-import api from "@/lib/api";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 import AddCourseForm from "./AddCourseForm";
 import EditCourseModal from "./EditCourseModal";
 import CourseDetails from "./CourseDetails";
-import DeleteCourseConfirm from "./DeleteCourseConfirm"; // ✅ new import
+import DeleteCourseConfirm from "./DeleteCourseConfirm";
 
 export default function CoursesTable() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [editingCourse, setEditingCourse] = useState(null);
-  const [courseToDelete, setCourseToDelete] = useState(null); // ✅ modal state
+  const [courseToDelete, setCourseToDelete] = useState(null);
 
-  const fetchCourses = () => {
+  const { sanctumGet } = useSanctumRequest();
+
+  const fetchCourses = async () => {
     setLoading(true);
-    api
-      .get("/api/courses")
-      .then((res) => setCourses(res.data))
-      .catch((err) => console.error("Failed to load courses", err))
-      .finally(() => setLoading(false));
+    try {
+      const res = await sanctumGet("/api/courses");
+      setCourses(res.data ?? []);
+    } catch (err) {
+      console.error("Failed to load courses", err);
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchCourses();
-  }, []);
+  }, [sanctumGet]);
 
   const handleBack = () => setSelectedCourseId(null);
   const handleEdit = (course) => setEditingCourse(course);
-  const handleDeleteModal = (course) => setCourseToDelete(course); // ✅ open modal
+  const handleDeleteModal = (course) => setCourseToDelete(course);
 
   if (loading) return <Loader mt="md" />;
   if (!courses.length) return <Text>No courses found.</Text>;

@@ -7,9 +7,9 @@ import {
   IconUsers,
   IconUserCog,
 } from "@tabler/icons-react";
-import InstructorManager from "@/components/admin/ InstructorManager";
+import InstructorManager from "@/components/admin/InstructorManager";
 import StudentManager from "@/components/admin/StudentManager";
-import CourseManager from "@/components/admin/ CourseManager";
+import CourseManager from "@/components/admin/CourseManager";
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -31,7 +31,7 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, []);
+  }, [sanctumGet]); // ✅ Stable and safe
 
   const navbar = (
     <>

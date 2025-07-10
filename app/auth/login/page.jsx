@@ -22,15 +22,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
-    if (user?.role) {
+    if (user?.role && !hasRedirected) {
       router.replace(`/dashboard/${user.role}`);
+      setHasRedirected(true);
     }
-  }, [user, router]);
+  }, [user?.role, hasRedirected, router]); // ✅ Stable dependencies
 
   const handleLogin = async (e) => {
-    if (e) e.preventDefault();
+    e?.preventDefault();
 
     setLoading(true);
     setError("");
@@ -41,11 +43,14 @@ export default function LoginPage() {
         password,
       });
 
-      const { user } = response.data;
-      setUser(user);
-
-      const rolePath = `/dashboard/${user.role || "student"}`;
-      router.push(rolePath);
+      const { user: loggedInUser } = response.data;
+      if (loggedInUser?.role) {
+        setUser(loggedInUser);
+        router.push(`/dashboard/${loggedInUser.role}`);
+        setHasRedirected(true);
+      } else {
+        setError("Login succeeded but role was not set.");
+      }
     } catch (err) {
       console.error("Login failed:", err);
       setError("Invalid credentials or server error");

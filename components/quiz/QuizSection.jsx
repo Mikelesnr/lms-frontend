@@ -11,8 +11,7 @@ import {
   LoadingOverlay,
   Flex,
 } from "@mantine/core";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function QuizSection({ lessonId, onSubmit }) {
   const router = useRouter();
@@ -22,46 +21,31 @@ export default function QuizSection({ lessonId, onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
-  useEffect(() => {
-    loadQuiz();
-  }, [lessonId]);
+  const { sanctumGet, sanctumPost } = useSanctumRequest();
 
-  const loadQuiz = async () => {
+  useEffect(() => {
     if (!lessonId) return;
 
-    const token = Cookies.get("XSRF-TOKEN");
-    if (!token) {
-      console.warn("Missing CSRF token while loading quiz");
-      return;
-    }
+    const loadQuiz = async () => {
+      setLoading(true);
+      try {
+        const res = await sanctumGet(`/api/lessons/${lessonId}/quiz`);
+        setQuiz(res.data);
+      } catch (err) {
+        console.error("❌ Failed to load quiz:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    try {
-      const res = await api.get(`/api/lessons/${lessonId}/quiz`, {
-        withCredentials: true,
-        headers: {
-          "X-XSRF-TOKEN": decodeURIComponent(token),
-        },
-      });
-
-      setQuiz(res.data);
-    } catch (err) {
-      console.error("❌ Failed to load quiz:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadQuiz();
+  }, [lessonId, sanctumGet]);
 
   const handleChange = (questionId, answerId) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answerId }));
   };
 
   const handleSubmit = async () => {
-    const token = Cookies.get("XSRF-TOKEN");
-    if (!token) {
-      console.warn("Missing CSRF token during submission");
-      return;
-    }
-
     const { score, correct, total } = calculateScoreClientSide();
 
     const completionPayload = {
@@ -69,22 +53,14 @@ export default function QuizSection({ lessonId, onSubmit }) {
       grade: score,
     };
 
-    console.log("📤 Submitting grade payload:", completionPayload);
-
     try {
       setSubmitting(true);
-
-      const res = await api.post("/api/completed-lessons", completionPayload, {
-        withCredentials: true,
-        headers: {
-          "X-XSRF-TOKEN": decodeURIComponent(token),
-        },
-      });
-
-      console.log("✅ Lesson marked complete:", res.data);
-
+      const res = await sanctumPost(
+        "/api/completed-lessons",
+        completionPayload
+      );
       setResult({ score, correct, total });
-      if (onSubmit) onSubmit();
+      onSubmit?.();
     } catch (error) {
       console.error(
         "❌ Grade submission failed:",

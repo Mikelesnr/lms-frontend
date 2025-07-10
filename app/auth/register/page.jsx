@@ -27,15 +27,15 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ Guarded redirect after login
   useEffect(() => {
     if (user?.role) {
       router.replace(`/dashboard/${user.role}`);
     }
-  }, [user, router]);
+  }, [user?.role, router]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
-
     setLoading(true);
     setError("");
 
@@ -51,7 +51,9 @@ export default function RegisterPage() {
       router.push("/auth/verify-email");
     } catch (err) {
       console.error("Registration failed:", err);
-      setError("Invalid input or CSRF mismatch");
+      setError(
+        err?.response?.data?.message || "Invalid input or CSRF mismatch"
+      );
     } finally {
       setLoading(false);
     }

@@ -33,9 +33,11 @@ export default function StudentQuizAnalytics() {
     };
 
     fetchAnalytics();
-  });
+  }, [sanctumGet]); // ✅ now properly scoped
+
   if (loading) return <Loader mt="xl" />;
-  if (loadError)
+
+  if (loadError) {
     return (
       <Alert
         icon={<IconAlertCircle size={16} />}
@@ -46,6 +48,7 @@ export default function StudentQuizAnalytics() {
         Could not load quiz analytics. Please try again later.
       </Alert>
     );
+  }
 
   if (!analytics.length) {
     return <Text>No quiz data available yet.</Text>;

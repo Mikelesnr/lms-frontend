@@ -11,14 +11,21 @@ export default function FeaturedCourses({ user }) {
   const { sanctumGet } = useSanctumRequest();
 
   useEffect(() => {
-    sanctumGet("/api/courses/featured")
-      .then((res) => setFeatured(res.data))
-      .catch((err) => {
+    const fetchFeatured = async () => {
+      setLoading(true);
+      try {
+        const res = await sanctumGet("/api/courses/featured");
+        setFeatured(res.data ?? []);
+      } catch (err) {
         console.error("Error loading featured courses:", err);
         setFeatured([]);
-      })
-      .finally(() => setLoading(false));
-  }, [sanctumGet]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFeatured();
+  }, [sanctumGet]); // ✅ Complete dependency array
 
   return (
     <div style={{ marginTop: "3rem" }}>

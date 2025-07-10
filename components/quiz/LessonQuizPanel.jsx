@@ -45,7 +45,7 @@ export default function LessonQuizPanel({ lessonId }) {
 
   useEffect(() => {
     fetchQuiz();
-  }, [lessonId]);
+  }, [lessonId, sanctumGet]); // ✅ added sanctumGet
 
   const handleQuestionAdded = (newQuestion) => {
     setQuiz((prev) => ({

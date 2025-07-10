@@ -13,31 +13,34 @@ import {
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function CourseManager() {
+  const { sanctumGet } = useSanctumRequest();
+
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(null);
-  const { sanctumGet } = useSanctumRequest();
 
   useEffect(() => {
     const fetchCourses = async () => {
       setLoading(true);
       try {
         const res = await sanctumGet(`/api/admin/courses?page=${page}`);
-        setCourses(res.data.data); // Laravel wraps data here
+        setCourses(res.data?.data ?? []);
         setMeta({
-          current_page: res.data.current_page,
-          last_page: res.data.last_page,
+          current_page: res.data?.current_page,
+          last_page: res.data?.last_page,
         });
       } catch (err) {
         console.error("Failed to fetch courses:", err);
+        setCourses([]);
+        setMeta(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchCourses();
-  }, [page]);
+  }, [page, sanctumGet]); // ✅ Stable and complete dependency array
 
   return (
     <Card padding="md" mt="md">
@@ -66,7 +69,7 @@ export default function CourseManager() {
             </tbody>
           </Table>
 
-          {meta && meta.last_page > 1 && (
+          {meta?.last_page > 1 && (
             <Group justify="space-between" mt="md">
               <Text size="sm">
                 Page {meta.current_page} of {meta.last_page}

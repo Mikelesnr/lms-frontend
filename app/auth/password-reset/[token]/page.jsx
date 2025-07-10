@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TextInput,
   PasswordInput,
@@ -14,14 +14,14 @@ import {
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function ResetPasswordPage({ params }) {
-  const token = params.token;
-  const search = useSearchParams();
-  const emailFromQuery = search.get("email");
-
   const { sanctumPost } = useSanctumRequest();
 
+  const token = params.token;
+  const search = useSearchParams();
+
+  const [emailQuery, setEmailQuery] = useState("");
   const [form, setForm] = useState({
-    email: emailFromQuery || "",
+    email: "",
     password: "",
     password_confirmation: "",
   });
@@ -29,16 +29,25 @@ export default function ResetPasswordPage({ params }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ Populate email from query using useEffect to prevent hydration mismatch
+  useEffect(() => {
+    const email = search.get("email") || "";
+    setEmailQuery(email);
+    setForm((prev) => ({ ...prev, email }));
+  }, [search]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSuccess(false);
+    setError("");
 
     try {
       await sanctumPost("/api/auth/reset-password", {
         ...form,
         token,
       });
+
       setSuccess(true);
-      setError("");
     } catch (err) {
       setError(err?.response?.data?.message || "Reset failed.");
     }

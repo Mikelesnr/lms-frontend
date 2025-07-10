@@ -1,22 +1,20 @@
 "use client";
+
 import { Text } from "@mantine/core";
 import StandardModal from "@/components/layouts/StandardModal";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
 import { useState } from "react";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function DeleteQuizConfirm({ quiz, onClose, onDeleted }) {
   const [loading, setLoading] = useState(false);
+  const { sanctumDelete } = useSanctumRequest();
 
   if (!quiz) return null;
 
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-      await api.delete(`/api/quizzes/${quiz.id}`, {
-        headers: { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) },
-      });
+      await sanctumDelete(`/api/quizzes/${quiz.id}`);
       onDeleted();
       onClose();
     } catch (err) {

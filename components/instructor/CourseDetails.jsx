@@ -13,13 +13,12 @@ import {
   Group,
 } from "@mantine/core";
 
-import api from "@/lib/api";
-
 import LessonListItem from "@/components/lesson/LessonListItem";
 import EditLessonModal from "@/components/lesson/EditLessonModal";
 import DeleteLessonConfirm from "@/components/lesson/DeleteLessonConfirm";
 import AddLessonForm from "@/components/lesson/AddLessonForm";
 import LessonQuizPanel from "@/components/quiz/LessonQuizPanel";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function CourseDetails({ id }) {
   const [course, setCourse] = useState(null);
@@ -29,18 +28,24 @@ export default function CourseDetails({ id }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
 
-  const fetchCourse = () => {
+  const { sanctumGet } = useSanctumRequest();
+
+  const fetchCourse = async () => {
     setLoading(true);
-    api
-      .get(`/api/courses/${id}`)
-      .then((res) => setCourse(res.data))
-      .catch((err) => console.error("Failed to load course:", err))
-      .finally(() => setLoading(false));
+    try {
+      const res = await sanctumGet(`/api/courses/${id}`);
+      setCourse(res.data);
+    } catch (err) {
+      console.error("Failed to load course:", err);
+      setCourse(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchCourse();
-  }, [id]);
+  }, [id, sanctumGet]);
 
   if (loading) return <Loader mt="xl" />;
   if (!course) return <Text mt="xl">Course not found.</Text>;

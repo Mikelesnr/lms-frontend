@@ -1,31 +1,21 @@
+"use client";
+
 import { useState } from "react";
 import { TextInput, Textarea, Button, Paper, Group } from "@mantine/core";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function AddCourseForm({ onSuccess }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const { sanctumPost } = useSanctumRequest();
+
   const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      // Ensure CSRF cookies are set
-      // await api.get("/sanctum/csrf-cookie");
-
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-
-      await api.post(
-        "/api/courses",
-        { title, description },
-        {
-          headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
-          },
-        }
-      );
+      await sanctumPost("/api/courses", { title, description });
 
       setTitle("");
       setDescription("");

@@ -1,26 +1,18 @@
-// app/auth/verify-email/page.jsx
 "use client";
+
 import { useState } from "react";
 import { Button, Text, Stack, Paper } from "@mantine/core";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function VerifyEmailPage() {
   const [message, setMessage] = useState("");
+  const { sanctumPost } = useSanctumRequest();
 
   const resendLink = async () => {
+    setMessage("");
+
     try {
-      const token = Cookies.get("XSRF-TOKEN");
-      await api.post(
-        "/email/verification-notification",
-        {},
-        {
-          withCredentials: true,
-          headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(token),
-          },
-        }
-      );
+      await sanctumPost("/api/auth/email/verification-notification");
       setMessage("✅ Verification link resent. Check your inbox!");
     } catch (err) {
       console.error("Resend failed:", err);

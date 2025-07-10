@@ -29,7 +29,7 @@ export default function DashboardLayout({ title, navbar, children }) {
     try {
       await sanctumPost("/api/auth/logout");
       setUser(null);
-      router.push("/login");
+      router.replace("/auth/login"); // 🔄 Optional redirect refinement
     } catch (err) {
       console.error("Logout failed", err);
     }
@@ -46,7 +46,7 @@ export default function DashboardLayout({ title, navbar, children }) {
       padding="md"
     >
       {/* Header */}
-      <AppShell.Header>
+      <AppShellHeader>
         <Group justify="space-between" h="100%" px="md">
           <Group>
             <Burger
@@ -59,10 +59,10 @@ export default function DashboardLayout({ title, navbar, children }) {
             <Title order={4}>{title}</Title>
           </Group>
         </Group>
-      </AppShell.Header>
+      </AppShellHeader>
 
       {/* Sidebar Navigation with Profile */}
-      <AppShell.Navbar p="md">
+      <AppShellNavbar p="md">
         <Box mb="xl">{navbar}</Box>
 
         <Box mt="auto">
@@ -92,6 +92,7 @@ export default function DashboardLayout({ title, navbar, children }) {
           </Stack>
 
           <Divider my="sm" />
+
           <Stack spacing={4}>
             <Text size="sm" fw={600}>
               {user?.name}
@@ -99,9 +100,11 @@ export default function DashboardLayout({ title, navbar, children }) {
             <Text size="xs" c="dimmed">
               {user?.email}
             </Text>
-            <Text size="xs" c="gray">
-              {user?.role.charAt(0).toUpperCase() + user?.role.slice(1)}
-            </Text>
+            {user?.role && (
+              <Text size="xs" c="gray">
+                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+              </Text>
+            )}
 
             <Button
               mt="sm"
@@ -115,12 +118,12 @@ export default function DashboardLayout({ title, navbar, children }) {
             </Button>
           </Stack>
         </Box>
-      </AppShell.Navbar>
+      </AppShellNavbar>
 
       {/* Main Content */}
-      <AppShell.Main>
+      <AppShellMain>
         <Box>{children}</Box>
-      </AppShell.Main>
+      </AppShellMain>
     </AppShell>
   );
 }
