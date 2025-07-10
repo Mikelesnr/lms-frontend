@@ -30,20 +30,22 @@ export default function StudentManager() {
       setLoading(true);
       try {
         const res = await sanctumGet(`/api/admin/students?page=${page}`);
-        setStudents(res.data.data);
+        setStudents(res.data?.data ?? []);
         setMeta({
-          current_page: res.data.current_page,
-          last_page: res.data.last_page,
+          current_page: res.data?.current_page ?? 1,
+          last_page: res.data?.last_page ?? 1,
         });
       } catch (err) {
         console.error("Failed to fetch students:", err);
+        setStudents([]);
+        setMeta(null);
       } finally {
         setLoading(false);
       }
     };
 
     fetchStudents();
-  }, [page]);
+  }, [page, sanctumGet]);
 
   const handleRoleChange = async (userId, newRole) => {
     try {
@@ -126,7 +128,7 @@ export default function StudentManager() {
             </tbody>
           </Table>
 
-          {meta && meta.last_page > 1 && (
+          {meta?.last_page > 1 && (
             <Group justify="space-between" mt="md">
               <Text size="sm">
                 Page {meta.current_page} of {meta.last_page}

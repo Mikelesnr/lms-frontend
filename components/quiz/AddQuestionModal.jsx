@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Modal, Textarea, Button, Group, Box } from "@mantine/core";
+import { Modal, Textarea, Button, Group } from "@mantine/core";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function AddQuestionModal({

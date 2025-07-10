@@ -1,13 +1,16 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { TextInput, Textarea } from "@mantine/core";
-import api from "@/lib/api";
 import StandardModal from "../layouts/StandardModal";
-import Cookies from "js-cookie"; // ✅ import js-cookie
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function EditCourseModal({ course, onClose, onSaved }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const { sanctumPut } = useSanctumRequest();
 
   useEffect(() => {
     if (course) {
@@ -21,18 +24,7 @@ export default function EditCourseModal({ course, onClose, onSaved }) {
     setLoading(true);
 
     try {
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-
-      await api.put(
-        `/api/courses/${course.id}`,
-        { title, description },
-        {
-          headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
-          },
-        }
-      );
-
+      await sanctumPut(`/api/courses/${course.id}`, { title, description });
       onSaved();
       onClose();
     } catch (err) {

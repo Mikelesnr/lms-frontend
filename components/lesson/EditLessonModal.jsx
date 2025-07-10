@@ -1,9 +1,9 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { TextInput, Textarea, NumberInput } from "@mantine/core";
 import StandardModal from "@/components/layouts/StandardModal";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function EditLessonModal({ lesson, onClose, onSaved }) {
   const [title, setTitle] = useState("");
@@ -11,6 +11,8 @@ export default function EditLessonModal({ lesson, onClose, onSaved }) {
   const [videoUrl, setVideoUrl] = useState("");
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const { sanctumPut } = useSanctumRequest();
 
   useEffect(() => {
     if (lesson) {
@@ -25,19 +27,12 @@ export default function EditLessonModal({ lesson, onClose, onSaved }) {
     if (!lesson) return;
     setLoading(true);
     try {
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-      await api.put(
-        `/api/lessons/${lesson.id}`,
-        {
-          title,
-          content,
-          video_url: videoUrl,
-          order,
-        },
-        {
-          headers: { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) },
-        }
-      );
+      await sanctumPut(`/api/lessons/${lesson.id}`, {
+        title,
+        content,
+        video_url: videoUrl,
+        order,
+      });
       onSaved();
       onClose();
     } catch (err) {

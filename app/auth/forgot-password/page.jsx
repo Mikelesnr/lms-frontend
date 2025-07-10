@@ -18,14 +18,15 @@ export default function ForgotPasswordPage() {
   const { sanctumPost } = useSanctumRequest();
 
   const handleRequest = async (e) => {
-    if (e) e.preventDefault();
+    e?.preventDefault();
+
+    setSent(false);
+    setError("");
 
     try {
       await sanctumPost("/api/auth/forgot-password", { email });
       setSent(true);
-      setError("");
     } catch (err) {
-      setSent(false);
       setError(err?.response?.data?.message || "Failed to send reset email.");
     }
   };

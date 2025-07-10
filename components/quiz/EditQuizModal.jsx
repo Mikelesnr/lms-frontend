@@ -1,46 +1,71 @@
 "use client";
-import { useState } from "react";
-import { TextInput, Button, Group } from "@mantine/core";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
 
-export default function AddQuizForm({ lessonId, onCreated }) {
+import { useEffect, useState } from "react";
+import { TextInput, Loader, Text } from "@mantine/core";
+import StandardModal from "@/components/layouts/StandardModal";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+
+export default function EditQuizModal({ lesson, onClose, onSaved }) {
   const [title, setTitle] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
+  const { sanctumPut, sanctumGet } = useSanctumRequest();
 
-  const handleCreate = async () => {
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      if (!lesson) return;
+
+      try {
+        const res = await sanctumGet(`/api/lessons/${lesson.id}/quiz`);
+        setTitle(res.data?.title ?? "");
+      } catch (err) {
+        console.error("Failed to load quiz title:", err);
+        setTitle("");
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchQuiz();
+  }, [lesson, sanctumGet]);
+
+  const handleUpdate = async () => {
+    if (!lesson) return;
     setLoading(true);
+
     try {
-      await api.get("/sanctum/csrf-cookie");
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-      await api.post(
-        "/api/quizzes",
-        { title, lesson_id: lessonId },
-        {
-          headers: { "X-XSRF-TOKEN": decodeURIComponent(xsrfToken) },
-        }
-      );
-      setTitle("");
-      onCreated();
+      await sanctumPut(`/api/lessons/${lesson.id}/quiz`, { title });
+      onSaved?.();
+      onClose?.();
     } catch (err) {
-      console.error("Quiz creation failed", err);
+      console.error("Failed to update quiz:", err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Group mt="sm">
-      <TextInput
-        placeholder="Enter quiz title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-        w="300"
-      />
-      <Button onClick={handleCreate} loading={loading}>
-        Create Quiz
-      </Button>
-    </Group>
+    <StandardModal
+      opened={!!lesson}
+      onClose={onClose}
+      onSubmit={handleUpdate}
+      title="Edit Quiz Title"
+      loading={loading}
+    >
+      {fetching ? (
+        <Loader mt="sm" />
+      ) : title ? (
+        <TextInput
+          label="Quiz Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+      ) : (
+        <Text color="red" size="sm">
+          Quiz not found for this lesson.
+        </Text>
+      )}
+    </StandardModal>
   );
 }

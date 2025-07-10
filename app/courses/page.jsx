@@ -19,12 +19,11 @@ import { useDebouncedValue } from "@mantine/hooks";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/useAuth";
 import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
-import api from "@/lib/api";
 import CourseCard from "@/components/courses/CourseCard";
 
 export default function AllCoursesPage() {
   const { user, setUser } = useAuth();
-  const { sanctumPost } = useSanctumRequest();
+  const { sanctumPost, sanctumGet } = useSanctumRequest();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -39,10 +38,11 @@ export default function AllCoursesPage() {
   const [error, setError] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
 
+  // ✅ Fetch course categories once on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await api.get("/api/courses/categories");
+        const res = await sanctumGet("/api/courses/categories");
         setCategoryOptions(res.data || []);
       } catch (err) {
         console.error("Failed to load categories:", err);
@@ -51,13 +51,14 @@ export default function AllCoursesPage() {
       }
     };
     fetchCategories();
-  }, []);
+  }, [sanctumGet]);
 
+  // ✅ Fetch courses when filters or page change
   useEffect(() => {
     const fetchCourses = async () => {
       setLoadingCourses(true);
       try {
-        const res = await api.get("/api/courses/all", {
+        const res = await sanctumGet("/api/courses/all", {
           params: { search: debouncedSearch, category, page },
         });
         setCourses(res.data.data || []);
@@ -73,7 +74,7 @@ export default function AllCoursesPage() {
       }
     };
     fetchCourses();
-  }, [debouncedSearch, category, page]);
+  }, [debouncedSearch, category, page, sanctumGet]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);

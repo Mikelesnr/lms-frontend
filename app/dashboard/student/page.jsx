@@ -28,16 +28,18 @@ export default function StudentDashboard() {
       try {
         const res = await sanctumGet("/api/enrollments/me");
         setCourses(res.data || []);
+        setLoadError(null);
       } catch (err) {
         console.error("❌ Error fetching enrollments:", err);
-        setLoadError(err);
+        setCourses([]);
+        setLoadError("Could not load your enrolled courses.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchCourses();
-  }, []);
+  }, [sanctumGet]); // ✅ Stable dependency
 
   const navbar = (
     <>
@@ -72,24 +74,14 @@ export default function StudentDashboard() {
           color="red"
           mt="md"
         >
-          Could not load your enrolled courses. Try again shortly.
+          {loadError}
         </Alert>
       );
 
-    switch (view) {
-      case "overview":
-        return (
-          <>
-            <StudentOverviewCards courses={courses} />
-          </>
-        );
-      case "courses":
-        return <EnrolledCoursesTable courses={courses} />;
-      case "analytics":
-        return <StudentQuizAnalytics courses={courses} />;
-      default:
-        return null;
-    }
+    if (view === "overview") return <StudentOverviewCards courses={courses} />;
+    if (view === "courses") return <EnrolledCoursesTable courses={courses} />;
+    if (view === "analytics") return <StudentQuizAnalytics courses={courses} />;
+    return null;
   };
 
   return (

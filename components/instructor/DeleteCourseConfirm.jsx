@@ -1,27 +1,20 @@
 "use client";
 
 import { Text } from "@mantine/core";
-import api from "@/lib/api";
 import StandardModal from "../layouts/StandardModal";
-import Cookies from "js-cookie";
 import { useState } from "react";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function DeleteCourseConfirm({ course, onClose, onDeleted }) {
   const [loading, setLoading] = useState(false);
+  const { sanctumDelete } = useSanctumRequest();
 
-  if (!course) return null; // ✅ Guard to prevent crash
+  if (!course) return null;
 
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const xsrfToken = Cookies.get("XSRF-TOKEN");
-
-      await api.delete(`/api/courses/${course.id}`, {
-        headers: {
-          "X-XSRF-TOKEN": decodeURIComponent(xsrfToken),
-        },
-      });
-
+      await sanctumDelete(`/api/courses/${course.id}`);
       onDeleted();
       onClose();
     } catch (err) {

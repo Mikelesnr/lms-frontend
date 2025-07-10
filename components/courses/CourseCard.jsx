@@ -3,14 +3,14 @@
 import { Card, Image, Text, Button, Badge, Group, Flex } from "@mantine/core";
 import Link from "next/link";
 import { useState } from "react";
-import api from "@/lib/api";
-import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function CourseCard({ course, user }) {
   const [enrolled, setEnrolled] = useState(course.enrolled || false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { sanctumPost } = useSanctumRequest();
 
   const handleEnroll = async () => {
     if (!user) {
@@ -24,20 +24,10 @@ export default function CourseCard({ course, user }) {
       return;
     }
 
-    const xsrf = Cookies.get("XSRF-TOKEN");
     setLoading(true);
 
     try {
-      await api.post(
-        "/api/my/enrollments",
-        { course_id: course.id },
-        {
-          withCredentials: true,
-          headers: {
-            "X-XSRF-TOKEN": decodeURIComponent(xsrf),
-          },
-        }
-      );
+      await sanctumPost("/api/my/enrollments", { course_id: course.id });
       setEnrolled(true);
     } catch (err) {
       console.error("Enrollment failed:", err);
