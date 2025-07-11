@@ -1,15 +1,25 @@
 "use client";
 
-import { Card, Image, Text, Button, Badge, Group, Flex } from "@mantine/core";
-import Link from "next/link";
+import {
+  Card,
+  Image,
+  Text,
+  Button,
+  Badge,
+  Group,
+  Flex,
+  Box,
+} from "@mantine/core";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/useAuthStore";
+import CourseDetailsModal from "@/components/courses/CourseDetailsModal";
 import api from "@/lib/api";
 
 export default function CourseCard({ course }) {
   const [enrolled, setEnrolled] = useState(course.enrolled || false);
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const router = useRouter();
   const { user, token } = useAuthStore();
 
@@ -21,7 +31,7 @@ export default function CourseCard({ course }) {
     }
 
     if (user.role !== "student") {
-      alert("You must be logged in as a student to enroll.");
+      alert("Only students can enroll in courses.");
       return;
     }
 
@@ -36,6 +46,7 @@ export default function CourseCard({ course }) {
         }
       );
       setEnrolled(true);
+      alert(`You're now enrolled in "${course.title}"`);
     } catch (err) {
       console.error("Enrollment failed:", err);
       alert("Something went wrong. Please try again.");
@@ -45,49 +56,74 @@ export default function CourseCard({ course }) {
   };
 
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
-      <Card.Section>
-        <Image src={course.image_url || "/placeholder.jpg"} height={140} />
-      </Card.Section>
+    <>
+      <Card
+        shadow="sm"
+        padding="lg"
+        radius="md"
+        withBorder
+        style={{
+          height: 360,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
+      >
+        <Card.Section>
+          <Image src={course.image_url || "/placeholder.jpg"} height={140} />
+        </Card.Section>
 
-      <Group justify="space-between" mt="md" mb="xs">
-        <Text fw={600}>{course.title}</Text>
-        <Badge color="teal" variant="light">
-          {course.category || "General"}
-        </Badge>
-      </Group>
-
-      <Text size="sm" c="dimmed" lineClamp={3}>
-        {course.description}
-      </Text>
-
-      <Flex mt="md" justify="space-between">
-        <Button
-          variant="light"
-          color="blue"
-          size="xs"
-          component={Link}
-          href={`/courses/${course.id}`}
-        >
-          View Details
-        </Button>
-
-        {enrolled ? (
-          <Badge color="green" size="sm" variant="filled">
-            Enrolled
+        <Group justify="space-between" mt="md" mb="xs">
+          <Text fw={600} size="md" lineClamp={1}>
+            {course.title}
+          </Text>
+          <Badge color="teal" variant="light">
+            {course.category || "General"}
           </Badge>
-        ) : (
-          <Button
-            variant="filled"
-            color="teal"
-            size="xs"
-            loading={loading}
-            onClick={handleEnroll}
-          >
-            Enroll
-          </Button>
-        )}
-      </Flex>
-    </Card>
+        </Group>
+
+        <Box style={{ flexGrow: 1 }}>
+          <Text size="sm" c="dimmed" lineClamp={3}>
+            {course.description}
+          </Text>
+        </Box>
+
+        <Box mt="md">
+          <Flex justify="space-between">
+            <Button
+              variant="light"
+              color="blue"
+              size="xs"
+              onClick={() => setModalOpen(true)}
+            >
+              View Details
+            </Button>
+
+            {enrolled ? (
+              <Badge color="green" size="sm" variant="filled">
+                Enrolled
+              </Badge>
+            ) : (
+              <Button
+                variant="filled"
+                color="teal"
+                size="xs"
+                loading={loading}
+                onClick={handleEnroll}
+              >
+                Enroll
+              </Button>
+            )}
+          </Flex>
+        </Box>
+      </Card>
+
+      {/* ✅ Modal for expanded view */}
+      <CourseDetailsModal
+        opened={modalOpen}
+        onClose={() => setModalOpen(false)}
+        course={course}
+      />
+    </>
   );
 }
