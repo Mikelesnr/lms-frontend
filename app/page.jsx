@@ -104,7 +104,11 @@ export default function HomePage() {
       {/* Benefits Section */}
       <Divider label="📦 Why Choose Us" labelPosition="center" my="xl" />
 
-      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
+      <SimpleGrid
+        style={{ marginBottom: "50px" }}
+        cols={{ base: 1, sm: 2, md: 3 }}
+        spacing="lg"
+      >
         <Benefit
           icon={<IconBook2 size={32} />}
           title="Expert Content"

@@ -20,9 +20,10 @@
     "dotenv": "^17.2.0",
     "js-cookie": "^3.0.5",
     "next": "15.3.4",
-    "react": "^19.0.0",
+    "react": "^19.1.0",
     "react-dom": "^19.0.0",
     "swr": "^2.3.4",
+    "toastify": "^2.0.1",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
