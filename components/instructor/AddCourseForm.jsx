@@ -2,24 +2,31 @@
 
 import { useState } from "react";
 import { TextInput, Textarea, Button, Paper, Group } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function AddCourseForm({ onSuccess }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { sanctumPost } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      await sanctumPost("/api/courses", { title, description });
+      await api.post(
+        "/api/courses",
+        { title, description },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       setTitle("");
       setDescription("");
-      onSuccess(); // trigger refresh
+      onSuccess?.(); // trigger refresh if provided
     } catch (err) {
       console.error("Failed to create course:", err);
     } finally {

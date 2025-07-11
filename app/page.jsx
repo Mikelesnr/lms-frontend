@@ -20,15 +20,13 @@ import {
   IconLogout,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useAuth } from "@/context/useAuth";
-import FeaturedCourses from "@/components/courses/FeaturedCourses";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 import useLogout from "@/lib/hooks/useLogout";
+import FeaturedCourses from "@/components/courses/FeaturedCourses";
 
 export default function HomePage() {
-  const { user, loading } = useAuth();
-  const logout = useLogout();
-
-  if (loading) return null;
+  const { user, token } = useAuthStore();
+  const logout = useLogout(token); // ✅ Token passed into hook
 
   return (
     <Container size="lg" pt="xl">
@@ -89,7 +87,7 @@ export default function HomePage() {
       )}
 
       {/* Featured Courses */}
-      <FeaturedCourses user={user} />
+      <FeaturedCourses />
 
       {/* View All Courses CTA */}
       <Center mt="lg">

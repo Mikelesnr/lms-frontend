@@ -9,25 +9,24 @@ import {
   Text,
   Notification,
 } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import api from "@/lib/api";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
-  const { sanctumPost } = useSanctumRequest();
 
   const handleRequest = async (e) => {
     e?.preventDefault();
-
     setSent(false);
     setError("");
 
     try {
-      await sanctumPost("/api/auth/forgot-password", { email });
+      await api.post("/api/auth/forgot-password", { email });
       setSent(true);
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to send reset email.");
+      const msg = err?.response?.data?.message || "Failed to send reset email.";
+      setError(msg);
     }
   };
 
@@ -56,7 +55,7 @@ export default function ForgotPasswordPage() {
           </Button>
 
           {error && (
-            <Text color="red" size="sm" mt="sm">
+            <Text c="red" size="sm" mt="sm">
               {error}
             </Text>
           )}

@@ -15,25 +15,16 @@ import {
   Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useAuth } from "@/context/useAuth";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
-import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import useLogout from "@/lib/hooks/useLogout";
+import { useState } from "react";
+import ProfileModal from "@/components/common/ProfileModal";
 
 export default function DashboardLayout({ title, navbar, children }) {
   const [opened, { toggle }] = useDisclosure();
-  const { user, setUser } = useAuth();
-  const { sanctumPost } = useSanctumRequest();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await sanctumPost("/api/auth/logout");
-      setUser(null);
-      router.replace("/auth/login"); // 🔄 Optional redirect refinement
-    } catch (err) {
-      console.error("Logout failed", err);
-    }
-  };
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const { user, token } = useAuthStore();
+  const logout = useLogout(token);
 
   return (
     <AppShell
@@ -61,7 +52,7 @@ export default function DashboardLayout({ title, navbar, children }) {
         </Group>
       </AppShellHeader>
 
-      {/* Sidebar Navigation with Profile */}
+      {/* Sidebar Navigation */}
       <AppShellNavbar p="md">
         <Box mb="xl">{navbar}</Box>
 
@@ -107,11 +98,21 @@ export default function DashboardLayout({ title, navbar, children }) {
             )}
 
             <Button
+              mt="xs"
+              size="xs"
+              variant="light"
+              fullWidth
+              onClick={() => setProfileModalOpen(true)}
+            >
+              Edit Profile
+            </Button>
+
+            <Button
               mt="sm"
               size="xs"
               variant="light"
               color="red"
-              onClick={handleLogout}
+              onClick={logout}
               fullWidth
             >
               Logout
@@ -124,6 +125,12 @@ export default function DashboardLayout({ title, navbar, children }) {
       <AppShellMain>
         <Box>{children}</Box>
       </AppShellMain>
+
+      {/* Profile Modal */}
+      <ProfileModal
+        opened={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+      />
     </AppShell>
   );
 }

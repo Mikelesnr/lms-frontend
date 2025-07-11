@@ -17,23 +17,56 @@ import {
   IconChartBar,
   IconHome,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import CoursesTable from "@/components/instructor/CoursesTable";
 import QuizAnalytics from "@/components/instructor/QuizAnalytics";
 import StudentsTable from "@/components/instructor/StudentsTable";
-import useInstructorStats from "@/lib/hooks/useInstructorStats";
 import RequireAuth from "@/components/auth/RequireAuth";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function InstructorDashboard() {
   const [view, setView] = useState("overview");
-  const { stats, loading: statsLoading } = useInstructorStats();
+  const [stats, setStats] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const { token } = useAuthStore();
 
-  const data = [
-    { id: 1, title: "Intro to JavaScript", students: 34 },
-    { id: 2, title: "Laravel Bootcamp", students: 52 },
-    { id: 3, title: "React for Beginners", students: 20 },
-  ];
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await api.get("/api/instructor/overview", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setStats(response.data);
+      } catch (err) {
+        console.error("Failed to fetch instructor stats:", err);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, [token]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await api.get("/api/instructor/courses", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCourses(response.data || []);
+      } catch (err) {
+        console.error("Failed to fetch instructor courses:", err);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    fetchCourses();
+  }, [token]);
 
   const navbar = (
     <>
@@ -73,7 +106,7 @@ export default function InstructorDashboard() {
               <Text size="sm" c="dimmed">
                 📘 Courses
               </Text>
-              {statsLoading ? (
+              {loadingStats ? (
                 <Loader size="xs" mt="sm" />
               ) : (
                 <Title order={3}>{stats?.courses ?? 0}</Title>
@@ -84,7 +117,7 @@ export default function InstructorDashboard() {
               <Text size="sm" c="dimmed">
                 👥 Active Students
               </Text>
-              {statsLoading ? (
+              {loadingStats ? (
                 <Loader size="xs" mt="sm" />
               ) : (
                 <Title order={3}>{stats?.active_students ?? 0}</Title>
@@ -95,7 +128,7 @@ export default function InstructorDashboard() {
               <Text size="sm" c="dimmed">
                 🎓 Lessons
               </Text>
-              {statsLoading ? (
+              {loadingStats ? (
                 <Loader size="xs" mt="sm" />
               ) : (
                 <Title order={3}>{stats?.lessons ?? 0}</Title>
@@ -108,10 +141,10 @@ export default function InstructorDashboard() {
           <>
             <Group justify="space-between" mb="md" mt="md" pl="md">
               <Title order={4}>📚 My Courses</Title>
-              {/* <Button size="sm">Add Course</Button> */}
+              {/* You could add an "Add Course" button here */}
             </Group>
             <Box pl="md">
-              <CoursesTable data={data} />
+              {loadingCourses ? <Loader /> : <CoursesTable data={courses} />}
             </Box>
           </>
         )}

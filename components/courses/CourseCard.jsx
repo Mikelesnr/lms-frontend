@@ -4,13 +4,14 @@ import { Card, Image, Text, Button, Badge, Group, Flex } from "@mantine/core";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
-export default function CourseCard({ course, user }) {
+export default function CourseCard({ course }) {
   const [enrolled, setEnrolled] = useState(course.enrolled || false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { sanctumPost } = useSanctumRequest();
+  const { user, token } = useAuthStore();
 
   const handleEnroll = async () => {
     if (!user) {
@@ -27,7 +28,13 @@ export default function CourseCard({ course, user }) {
     setLoading(true);
 
     try {
-      await sanctumPost("/api/my/enrollments", { course_id: course.id });
+      await api.post(
+        "/api/my/enrollments",
+        { course_id: course.id },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setEnrolled(true);
     } catch (err) {
       console.error("Enrollment failed:", err);

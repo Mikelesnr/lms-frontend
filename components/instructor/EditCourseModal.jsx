@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { TextInput, Textarea } from "@mantine/core";
 import StandardModal from "../layouts/StandardModal";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function EditCourseModal({ course, onClose, onSaved }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { sanctumPut } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   useEffect(() => {
     if (course) {
@@ -24,9 +25,13 @@ export default function EditCourseModal({ course, onClose, onSaved }) {
     setLoading(true);
 
     try {
-      await sanctumPut(`/api/courses/${course.id}`, { title, description });
-      onSaved();
-      onClose();
+      await api.put(
+        `/api/courses/${course.id}`,
+        { title, description },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      onSaved?.();
+      onClose?.();
     } catch (err) {
       console.error("Failed to update course:", err);
     } finally {

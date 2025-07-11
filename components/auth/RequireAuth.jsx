@@ -1,21 +1,24 @@
 "use client";
 
-import { useAuth } from "@/context/useAuth";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader, Center } from "@mantine/core";
-import { useEffect } from "react";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 
 export default function RequireAuth({ role, children }) {
-  const { user, loading } = useAuth();
+  const { user, token } = useAuthStore();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && (!user || (role && user.role !== role))) {
-      router.replace("/auth/login"); // or "/unauthorized"
-    }
-  }, [user, loading]);
+  const loading = !user && !token;
+  const unauthorized = !user || !token || (role && user?.role !== role);
 
-  if (loading || !user || (role && user.role !== role)) {
+  useEffect(() => {
+    if (!loading && unauthorized) {
+      router.replace("/auth/login");
+    }
+  }, [loading, unauthorized, router]);
+
+  if (loading || unauthorized) {
     return (
       <Center mt="xl">
         <Loader />

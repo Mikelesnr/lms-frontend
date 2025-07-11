@@ -11,25 +11,28 @@ import {
   Group,
   Text,
 } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 import UserModal from "@/components/admin/UserModal";
+import api from "@/lib/api";
 
 export default function StudentManager() {
+  const { token } = useAuthStore();
   const [students, setStudents] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
 
-  const { sanctumGet, sanctumPatch, sanctumPut, sanctumDelete } =
-    useSanctumRequest();
-
   useEffect(() => {
+    if (!token) return;
+
     const fetchStudents = async () => {
       setLoading(true);
       try {
-        const res = await sanctumGet(`/api/admin/students?page=${page}`);
+        const res = await api.get(`/api/admin/students?page=${page}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setStudents(res.data?.data ?? []);
         setMeta({
           current_page: res.data?.current_page ?? 1,
@@ -45,11 +48,15 @@ export default function StudentManager() {
     };
 
     fetchStudents();
-  }, [page, sanctumGet]);
+  }, [token, page]);
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await sanctumPatch(`/api/admin/users/${userId}`, { role: newRole });
+      await api.patch(
+        `/api/admin/users/${userId}`,
+        { role: newRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setStudents((prev) =>
         prev.map((user) =>
           user.id === userId ? { ...user, role: newRole } : user
@@ -62,7 +69,9 @@ export default function StudentManager() {
 
   const handleSaveUser = async (data) => {
     try {
-      await sanctumPut(`/api/admin/users/${data.id}`, data);
+      await api.put(`/api/admin/users/${data.id}`, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setStudents((prev) =>
         prev.map((u) => (u.id === data.id ? { ...u, ...data } : u))
       );
@@ -73,12 +82,25 @@ export default function StudentManager() {
 
   const handleDeleteUser = async (userId) => {
     try {
-      await sanctumDelete(`/api/admin/users/${userId}`);
+      await api.delete(`/api/admin/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setStudents((prev) => prev.filter((u) => u.id !== userId));
     } catch (err) {
       console.error("Failed to delete user:", err);
     }
   };
+
+  if (!token) {
+    return (
+      <Card padding="md" mt="md">
+        <Loader />
+        <Text ta="center" mt="md" c="dimmed">
+          Preparing student manager…
+        </Text>
+      </Card>
+    );
+  }
 
   return (
     <Card padding="md" mt="md">
@@ -86,25 +108,33 @@ export default function StudentManager() {
         <Loader />
       ) : (
         <>
-          <Table highlightOnHover withColumnBorders>
+          <Table
+            striped
+            highlightOnHover
+            withColumnBorders
+            verticalSpacing="sm"
+          >
             <thead>
               <tr>
-                <th style={{ width: "25%", textAlign: "left" }}>Name</th>
-                <th style={{ width: "25%", textAlign: "left" }}>Email</th>
-                <th style={{ width: "20%", textAlign: "left" }}>Enrolled</th>
-                <th style={{ width: "20%", textAlign: "left" }}>Role</th>
-                <th style={{ width: "10%", textAlign: "center" }}>Actions</th>
+                <th style={{ width: "22%", paddingLeft: "10px" }}>Name</th>
+                <th style={{ width: "28%", paddingLeft: "10px" }}>Email</th>
+                <th style={{ width: "15%", textAlign: "center" }}>Enrolled</th>
+                <th style={{ width: "20%", textAlign: "center" }}>Role</th>
+                <th style={{ width: "15%", textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {students.map((student) => (
                 <tr key={student.id}>
-                  <td>{student.name}</td>
-                  <td>{student.email}</td>
-                  <td>{student.enrollments_count}</td>
-                  <td>
+                  <td style={{ paddingLeft: "10px" }}>{student.name}</td>
+                  <td style={{ paddingLeft: "10px" }}>{student.email}</td>
+                  <td style={{ textAlign: "center" }}>
+                    {student.enrollments_count}
+                  </td>
+                  <td style={{ textAlign: "center" }}>
                     <Select
                       value={student.role}
+                      style={{ marginBottom: "5px" }}
                       onChange={(value) => handleRoleChange(student.id, value)}
                       data={["admin", "instructor", "student"]}
                       size="xs"
@@ -114,7 +144,7 @@ export default function StudentManager() {
                     <Button
                       size="xs"
                       variant="light"
-                      style={{ margin: "5px 10px" }}
+                      style={{ marginBottom: "5px" }}
                       onClick={() => {
                         setSelectedUser(student);
                         setModalOpen(true);

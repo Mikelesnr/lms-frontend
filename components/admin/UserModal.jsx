@@ -4,11 +4,9 @@ import { Modal, TextInput, Select, Button, Group } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { useEffect, useState } from "react";
 import ConfirmationModal from "./ConfirmationModal";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 
 export default function UserModal({ opened, onClose, user, onSave, onDelete }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const { sanctumPost } = useSanctumRequest();
 
   const form = useForm({
     initialValues: {
@@ -41,16 +39,6 @@ export default function UserModal({ opened, onClose, user, onSave, onDelete }) {
     onClose();
   };
 
-  const handleResetEmail = async () => {
-    try {
-      await sanctumPost(`/api/admin/users/${user.id}/send-password-reset`);
-      alert(`Reset email sent to ${user.email}`);
-    } catch (err) {
-      console.error("Reset email failed", err);
-      alert("Could not send reset email.");
-    }
-  };
-
   return (
     <>
       <Modal
@@ -76,11 +64,6 @@ export default function UserModal({ opened, onClose, user, onSave, onDelete }) {
                 onClick={() => setConfirmDelete(true)}
               >
                 Delete User
-              </Button>
-            )}
-            {user && (
-              <Button variant="outline" color="blue" onClick={handleResetEmail}>
-                Send Reset Email
               </Button>
             )}
             <Button type="submit">Save</Button>

@@ -11,7 +11,9 @@ import {
   LoadingOverlay,
   Flex,
 } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { notifications } from "@mantine/notifications";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function QuizSection({ lessonId, onSubmit }) {
   const router = useRouter();
@@ -21,54 +23,35 @@ export default function QuizSection({ lessonId, onSubmit }) {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
-  const { sanctumGet, sanctumPost } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   useEffect(() => {
-    if (!lessonId) return;
+    if (!lessonId || !token) return;
 
     const loadQuiz = async () => {
       setLoading(true);
       try {
-        const res = await sanctumGet(`/api/lessons/${lessonId}/quiz`);
+        const res = await api.get(`/api/lessons/${lessonId}/quiz`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setQuiz(res.data);
       } catch (err) {
         console.error("❌ Failed to load quiz:", err);
+        notifications.show({
+          title: "Quiz Load Failed",
+          message: "Unable to fetch this quiz. Please try again later.",
+          color: "red",
+        });
       } finally {
         setLoading(false);
       }
     };
 
     loadQuiz();
-  }, [lessonId, sanctumGet]);
+  }, [lessonId, token]);
 
   const handleChange = (questionId, answerId) => {
     setAnswers((prev) => ({ ...prev, [questionId]: answerId }));
-  };
-
-  const handleSubmit = async () => {
-    const { score, correct, total } = calculateScoreClientSide();
-
-    const completionPayload = {
-      lesson_id: lessonId,
-      grade: score,
-    };
-
-    try {
-      setSubmitting(true);
-      const res = await sanctumPost(
-        "/api/completed-lessons",
-        completionPayload
-      );
-      setResult({ score, correct, total });
-      onSubmit?.();
-    } catch (error) {
-      console.error(
-        "❌ Grade submission failed:",
-        error.response?.data || error.message
-      );
-    } finally {
-      setSubmitting(false);
-    }
   };
 
   const calculateScoreClientSide = () => {
@@ -82,15 +65,57 @@ export default function QuizSection({ lessonId, onSubmit }) {
       }
     });
 
-    const score = Math.round((correct / total) * 100);
-    return { score, correct, total };
+    return {
+      score: Math.round((correct / total) * 100),
+      correct,
+      total,
+    };
   };
 
-  if (loading) return <LoadingOverlay visible />;
+  const handleSubmit = async () => {
+    const { score, correct, total } = calculateScoreClientSide();
+    const completionPayload = {
+      lesson_id: lessonId,
+      grade: score,
+    };
+
+    try {
+      setSubmitting(true);
+      await api.post("/api/completed-lessons", completionPayload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setResult({ score, correct, total });
+      notifications.show({
+        title: "Quiz Submitted",
+        message: `You scored ${score}% (${correct}/${total})`,
+        color: "teal",
+      });
+
+      onSubmit?.();
+    } catch (error) {
+      console.error(
+        "❌ Grade submission failed:",
+        error.response?.data || error.message
+      );
+      notifications.show({
+        title: "Submission Failed",
+        message: "Your quiz score could not be saved. Please try again.",
+        color: "orange",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) return <LoadingOverlay visible={true} overlayBlur={2} />;
+
   if (!quiz) return <Title order={4}>No quiz available for this lesson.</Title>;
 
   return (
-    <Box mt="xl">
+    <Box mt="xl" pos="relative">
+      <LoadingOverlay visible={submitting} overlayBlur={2} />
+
       <Title order={3} mb="lg">
         Quiz: {quiz.title}
       </Title>
@@ -104,6 +129,7 @@ export default function QuizSection({ lessonId, onSubmit }) {
             name={`question-${q.id}`}
             value={answers[q.id] || null}
             onChange={(val) => handleChange(q.id, Number(val))}
+            aria-label={`Answers for question ${index + 1}`}
           >
             <Stack mt="sm">
               {q.answers.map((a) => (
@@ -119,6 +145,7 @@ export default function QuizSection({ lessonId, onSubmit }) {
           onClick={handleSubmit}
           loading={submitting}
           disabled={Object.keys(answers).length !== quiz.questions.length}
+          aria-label="Submit completed quiz"
         >
           Submit Quiz
         </Button>
@@ -129,11 +156,20 @@ export default function QuizSection({ lessonId, onSubmit }) {
             correct)
           </Title>
           <Flex mt="sm" gap="sm">
-            <Button onClick={() => router.refresh()} variant="default">
+            <Button
+              onClick={() => router.refresh()}
+              variant="default"
+              aria-label="Refresh Lesson"
+            >
               Refresh Lesson
             </Button>
             {onSubmit && (
-              <Button onClick={onSubmit} variant="filled" color="teal">
+              <Button
+                onClick={onSubmit}
+                variant="filled"
+                color="teal"
+                aria-label="Back to Lesson"
+              >
                 ← Back to Lesson
               </Button>
             )}

@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { TextInput, Textarea, NumberInput } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import StandardModal from "@/components/layouts/StandardModal";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function EditLessonModal({ lesson, onClose, onSaved }) {
   const [title, setTitle] = useState("");
@@ -12,7 +14,7 @@ export default function EditLessonModal({ lesson, onClose, onSaved }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { sanctumPut } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   useEffect(() => {
     if (lesson) {
@@ -24,19 +26,31 @@ export default function EditLessonModal({ lesson, onClose, onSaved }) {
   }, [lesson]);
 
   const handleUpdate = async () => {
-    if (!lesson) return;
+    if (!lesson || !token) return;
     setLoading(true);
     try {
-      await sanctumPut(`/api/lessons/${lesson.id}`, {
-        title,
-        content,
-        video_url: videoUrl,
-        order,
+      await api.put(
+        `/api/lessons/${lesson.id}`,
+        { title, content, video_url: videoUrl, order },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      notifications.show({
+        title: "Lesson updated",
+        message: `“${title}” has been successfully updated.`,
+        color: "teal",
+        autoClose: 3000,
       });
-      onSaved();
-      onClose();
+
+      onSaved?.();
+      onClose?.();
     } catch (err) {
       console.error("Failed to update lesson:", err);
+      notifications.show({
+        title: "Update failed",
+        message: "Could not update this lesson. Please try again.",
+        color: "orange",
+      });
     } finally {
       setLoading(false);
     }
@@ -49,6 +63,7 @@ export default function EditLessonModal({ lesson, onClose, onSaved }) {
       onSubmit={handleUpdate}
       title="Edit Lesson"
       loading={loading}
+      submitProps={{ "aria-label": "Save lesson changes" }}
     >
       <TextInput
         label="Title"
@@ -61,6 +76,7 @@ export default function EditLessonModal({ lesson, onClose, onSaved }) {
         mt="sm"
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        minRows={4}
       />
       <TextInput
         label="Video URL"
@@ -68,7 +84,14 @@ export default function EditLessonModal({ lesson, onClose, onSaved }) {
         value={videoUrl}
         onChange={(e) => setVideoUrl(e.target.value)}
       />
-      <NumberInput label="Order" mt="sm" value={order} onChange={setOrder} />
+      <NumberInput
+        label="Order"
+        mt="sm"
+        value={order}
+        onChange={setOrder}
+        min={1}
+        allowDecimal={false}
+      />
     </StandardModal>
   );
 }

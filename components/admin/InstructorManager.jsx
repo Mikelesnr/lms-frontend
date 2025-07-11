@@ -11,25 +11,28 @@ import {
   Group,
   Text,
 } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 import UserModal from "@/components/admin/UserModal";
+import api from "@/lib/api";
 
 export default function InstructorManager() {
+  const { token } = useAuthStore();
   const [instructors, setInstructors] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState(null);
   const [page, setPage] = useState(1);
 
-  const { sanctumGet, sanctumPatch, sanctumPut, sanctumDelete } =
-    useSanctumRequest();
-
   useEffect(() => {
+    if (!token) return;
+
     const fetchInstructors = async () => {
       setLoading(true);
       try {
-        const res = await sanctumGet(`/api/admin/instructors?page=${page}`);
+        const res = await api.get(`/api/admin/instructors?page=${page}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setInstructors(res.data?.data ?? []);
         setMeta({
           current_page: res.data?.current_page ?? 1,
@@ -45,11 +48,15 @@ export default function InstructorManager() {
     };
 
     fetchInstructors();
-  }, [page, sanctumGet]); // ✅ Dependency added
+  }, [token, page]);
 
   const handleRoleChange = async (userId, newRole) => {
     try {
-      await sanctumPatch(`/api/admin/users/${userId}`, { role: newRole });
+      await api.patch(
+        `/api/admin/users/${userId}`,
+        { role: newRole },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       setInstructors((prev) =>
         prev.map((user) =>
           user.id === userId ? { ...user, role: newRole } : user
@@ -62,7 +69,9 @@ export default function InstructorManager() {
 
   const handleSaveUser = async (data) => {
     try {
-      await sanctumPut(`/api/admin/users/${data.id}`, data);
+      await api.put(`/api/admin/users/${data.id}`, data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setInstructors((prev) =>
         prev.map((u) => (u.id === data.id ? { ...u, ...data } : u))
       );
@@ -73,12 +82,25 @@ export default function InstructorManager() {
 
   const handleDeleteUser = async (userId) => {
     try {
-      await sanctumDelete(`/api/admin/users/${userId}`);
+      await api.delete(`/api/admin/users/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setInstructors((prev) => prev.filter((u) => u.id !== userId));
     } catch (err) {
       console.error("Failed to delete user:", err);
     }
   };
+
+  if (!token) {
+    return (
+      <Card padding="md" mt="md">
+        <Loader />
+        <Text mt="md" ta="center" c="dimmed">
+          Authenticating instructor manager…
+        </Text>
+      </Card>
+    );
+  }
 
   return (
     <Card padding="md" mt="md">
@@ -86,14 +108,19 @@ export default function InstructorManager() {
         <Loader />
       ) : (
         <>
-          <Table highlightOnHover withColumnBorders>
-            <thead>
+          <Table
+            striped
+            highlightOnHover
+            withColumnBorders
+            verticalSpacing="sm"
+          >
+            <thead style={{ backgroundColor: "#00000" }}>
               <tr>
-                <th style={{ width: "25%", textAlign: "left" }}>Name</th>
+                <th style={{ width: "20%", textAlign: "left" }}>Name</th>
                 <th style={{ width: "25%", textAlign: "left" }}>Email</th>
-                <th style={{ width: "25%", textAlign: "left" }}>Courses</th>
-                <th style={{ width: "25%", textAlign: "left" }}>Role Change</th>
-                <th style={{ width: "25%", textAlign: "left" }}>Actions</th>
+                <th style={{ width: "15%", textAlign: "center" }}>Courses</th>
+                <th style={{ width: "20%", textAlign: "center" }}>Role</th>
+                <th style={{ width: "20%", textAlign: "center" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -101,10 +128,13 @@ export default function InstructorManager() {
                 <tr key={instructor.id}>
                   <td>{instructor.name}</td>
                   <td>{instructor.email}</td>
-                  <td>{instructor.courses_count}</td>
-                  <td>
+                  <td style={{ textAlign: "center" }}>
+                    {instructor.courses_count}
+                  </td>
+                  <td style={{ textAlign: "center" }}>
                     <Select
                       value={instructor.role}
+                      style={{ marginBottom: "5px" }}
                       onChange={(value) =>
                         handleRoleChange(instructor.id, value)
                       }
@@ -112,11 +142,11 @@ export default function InstructorManager() {
                       size="xs"
                     />
                   </td>
-                  <td>
+                  <td style={{ textAlign: "center" }}>
                     <Button
                       size="xs"
                       variant="light"
-                      style={{ margin: "5px 10px" }}
+                      style={{ marginBottom: "5px" }}
                       onClick={() => {
                         setSelectedUser(instructor);
                         setModalOpen(true);

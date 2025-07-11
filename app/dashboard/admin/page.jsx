@@ -1,6 +1,7 @@
 "use client";
 
-import { NavLink, Card, SimpleGrid, Title, Box, Select } from "@mantine/core";
+import { useEffect } from "react";
+import { NavLink, Card, SimpleGrid } from "@mantine/core";
 import {
   IconHome,
   IconBook,
@@ -10,20 +11,24 @@ import {
 import InstructorManager from "@/components/admin/InstructorManager";
 import StudentManager from "@/components/admin/StudentManager";
 import CourseManager from "@/components/admin/CourseManager";
-import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import RequireAuth from "@/components/auth/RequireAuth";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import { useAdminDashboardStore } from "@/lib/stores/useAdminDashboardStore";
+import api from "@/lib/api";
 
 export default function AdminDashboard() {
-  const [view, setView] = useState("overview");
-  const [stats, setStats] = useState(null);
-  const { sanctumGet } = useSanctumRequest();
+  const { token } = useAuthStore();
+  const { view, setView, stats, setStats } = useAdminDashboardStore();
 
   useEffect(() => {
+    if (!token) return;
+
     const fetchStats = async () => {
       try {
-        const res = await sanctumGet("/api/admin/stats");
+        const res = await api.get("/api/admin/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setStats(res.data);
       } catch (err) {
         console.error("Failed to fetch dashboard stats:", err);
@@ -31,7 +36,7 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, [sanctumGet]); // ✅ Stable and safe
+  }, [token, setStats]);
 
   const navbar = (
     <>
@@ -78,7 +83,6 @@ export default function AdminDashboard() {
             </Card>
           </SimpleGrid>
         )}
-
         {view === "instructors" && <InstructorManager />}
         {view === "students" && <StudentManager />}
         {view === "courses" && <CourseManager />}

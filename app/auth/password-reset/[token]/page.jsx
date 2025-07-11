@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import {
@@ -11,15 +12,14 @@ import {
   Text,
   Notification,
 } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import api from "@/lib/api";
 
-export default function ResetPasswordPage({ params }) {
-  const { sanctumPost } = useSanctumRequest();
-
-  const token = params.token;
+export default function ResetPasswordPage({ params: asyncParams }) {
+  const params = use(asyncParams); // ✅ unwraps promise in Next.js 15
   const search = useSearchParams();
 
-  const [emailQuery, setEmailQuery] = useState("");
+  const token = params?.token ?? "";
+
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -29,12 +29,17 @@ export default function ResetPasswordPage({ params }) {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ Populate email from query using useEffect to prevent hydration mismatch
   useEffect(() => {
-    const email = search.get("email") || "";
-    setEmailQuery(email);
-    setForm((prev) => ({ ...prev, email }));
+    const email = search.get("email") ?? "";
+    if (email) {
+      setForm((prev) => ({ ...prev, email }));
+    }
   }, [search]);
+
+  const handleChange = (field) => (e) => {
+    const value = e?.currentTarget?.value ?? "";
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -42,11 +47,10 @@ export default function ResetPasswordPage({ params }) {
     setError("");
 
     try {
-      await sanctumPost("/api/auth/reset-password", {
+      await api.post("/api/auth/reset-password", {
         ...form,
         token,
       });
-
       setSuccess(true);
     } catch (err) {
       setError(err?.response?.data?.message || "Reset failed.");
@@ -60,24 +64,32 @@ export default function ResetPasswordPage({ params }) {
       </Title>
 
       {success ? (
-        <Notification color="green">
-          Password reset successful! You may now log in.
+        <Notification color="green" withCloseButton={false}>
+          <div>
+            Password reset successful! You may now log in.
+            <Button
+              size="xs"
+              variant="light"
+              mt="sm"
+              onClick={() => (window.location.href = "/auth/login")}
+            >
+              Go to Login
+            </Button>
+          </div>
         </Notification>
       ) : (
         <form onSubmit={handleSubmit}>
           <TextInput
             label="Email"
             value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.currentTarget.value })}
+            onChange={handleChange("email")}
             required
           />
 
           <PasswordInput
             label="New Password"
             value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.currentTarget.value })
-            }
+            onChange={handleChange("password")}
             mt="md"
             required
           />
@@ -85,12 +97,7 @@ export default function ResetPasswordPage({ params }) {
           <PasswordInput
             label="Confirm Password"
             value={form.password_confirmation}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                password_confirmation: e.currentTarget.value,
-              })
-            }
+            onChange={handleChange("password_confirmation")}
             mt="md"
             required
           />
@@ -100,7 +107,7 @@ export default function ResetPasswordPage({ params }) {
           </Button>
 
           {error && (
-            <Text color="red" size="sm" mt="sm">
+            <Text c="red" size="sm" mt="sm">
               {error}
             </Text>
           )}
