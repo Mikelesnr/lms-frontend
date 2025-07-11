@@ -10,38 +10,74 @@ import {
   Flex,
   Tooltip,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { IconArrowLeft } from "@tabler/icons-react";
 import QuizSection from "@/components/quiz/QuizSection";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useLessonStore } from "@/lib/stores/useLessonStore";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function LessonView({ id, onReturnToCourses, onSwitchLesson }) {
-  const [lesson, setLesson] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showQuiz, setShowQuiz] = useState(false);
   const [grade, setGrade] = useState(null);
-  const { sanctumGet } = useSanctumRequest();
+
+  const { lessons, setLesson } = useLessonStore();
+  const { token } = useAuthStore();
+
+  const lesson = lessons[id] ?? null;
+
+  const fetchGrade = async () => {
+    try {
+      const resGrade = await api.get("/api/completed-lessons/grade", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const match = resGrade.data.grades?.find((g) => g.lesson_id == id);
+      if (match) setGrade(match.grade);
+    } catch (err) {
+      console.error("Grade fetch failed:", err);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const resLesson = await sanctumGet(
-          `/api/lessons/student-lessons/${id}`
-        );
-        setLesson(resLesson.data);
-
-        const resGrade = await sanctumGet("/api/completed-lessons/grade");
-        const match = resGrade.data.grades?.find((g) => g.lesson_id == id);
-        if (match) setGrade(match.grade);
-      } catch (err) {
-        console.error("Lesson or grade fetch failed:", err);
-        setGrade(null);
-      } finally {
-        setLoading(false);
+      if (!lesson) {
+        try {
+          const resLesson = await api.get(
+            `/api/lessons/student-lessons/${id}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          setLesson(id, resLesson.data);
+        } catch (err) {
+          console.error("Lesson fetch failed:", err);
+          notifications.show({
+            title: "Error loading lesson",
+            message: "Please try again later.",
+            color: "red",
+          });
+        }
       }
+
+      await fetchGrade();
+      setLoading(false);
     };
 
     fetchData();
-  }, [id, sanctumGet]);
+  }, [id, lesson, setLesson, token]);
+
+  const handleQuizSubmit = async () => {
+    setShowQuiz(false);
+    notifications.show({
+      title: "Quiz submitted",
+      message: "Your response has been recorded.",
+      color: "teal",
+      autoClose: 3000,
+    });
+
+    await fetchGrade(); // re-fetch the grade and update the view
+  };
 
   if (loading) return <Loader />;
   if (!lesson) return <Text>Lesson not found</Text>;
@@ -156,10 +192,8 @@ export default function LessonView({ id, onReturnToCourses, onSwitchLesson }) {
       {showQuiz && grade === null && (
         <QuizSection
           lessonId={lesson.id}
-          onSubmit={() => {
-            setShowQuiz(false);
-            setTimeout(() => window.location.reload(), 1000);
-          }}
+          onSubmit={handleQuizSubmit}
+          token={token}
         />
       )}
     </Container>

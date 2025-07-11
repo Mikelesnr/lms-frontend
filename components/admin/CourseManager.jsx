@@ -1,34 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  Table,
-  Loader,
-  Button,
-  Pagination,
-  Group,
-  Text,
-} from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { Card, Table, Loader, Pagination, Group, Text } from "@mantine/core";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function CourseManager() {
-  const { sanctumGet } = useSanctumRequest();
-
+  const { token } = useAuthStore();
   const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [meta, setMeta] = useState(null);
 
   useEffect(() => {
+    if (!token) return;
+
     const fetchCourses = async () => {
       setLoading(true);
       try {
-        const res = await sanctumGet(`/api/admin/courses?page=${page}`);
+        const res = await api.get(`/api/admin/courses?page=${page}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setCourses(res.data?.data ?? []);
         setMeta({
-          current_page: res.data?.current_page,
-          last_page: res.data?.last_page,
+          current_page: res.data?.current_page ?? 1,
+          last_page: res.data?.last_page ?? 1,
         });
       } catch (err) {
         console.error("Failed to fetch courses:", err);
@@ -40,7 +36,18 @@ export default function CourseManager() {
     };
 
     fetchCourses();
-  }, [page, sanctumGet]); // ✅ Stable and complete dependency array
+  }, [token, page]);
+
+  if (!token) {
+    return (
+      <Card padding="md" mt="md">
+        <Loader />
+        <Text mt="md" ta="center" c="dimmed">
+          Authenticating course manager…
+        </Text>
+      </Card>
+    );
+  }
 
   return (
     <Card padding="md" mt="md">
@@ -51,10 +58,10 @@ export default function CourseManager() {
           <Table striped highlightOnHover>
             <thead>
               <tr>
-                <th style={{ width: "25%", textAlign: "left" }}>Title</th>
-                <th style={{ width: "25%", textAlign: "left" }}>Instructor</th>
-                <th style={{ width: "25%", textAlign: "left" }}>Enrollments</th>
-                <th style={{ width: "25%", textAlign: "left" }}>Status</th>
+                <th>Title</th>
+                <th>Instructor</th>
+                <th>Enrollments</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>

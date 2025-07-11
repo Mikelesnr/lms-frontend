@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Table, Text, Loader, Button, Box } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 import AddCourseForm from "./AddCourseForm";
 import EditCourseModal from "./EditCourseModal";
@@ -16,12 +17,14 @@ export default function CoursesTable() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [courseToDelete, setCourseToDelete] = useState(null);
 
-  const { sanctumGet } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
-      const res = await sanctumGet("/api/courses");
+      const res = await api.get("/api/courses", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setCourses(res.data ?? []);
     } catch (err) {
       console.error("Failed to load courses", err);
@@ -33,7 +36,7 @@ export default function CoursesTable() {
 
   useEffect(() => {
     fetchCourses();
-  }, [sanctumGet]);
+  }, [token]);
 
   const handleBack = () => setSelectedCourseId(null);
   const handleEdit = (course) => setEditingCourse(course);

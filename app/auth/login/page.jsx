@@ -10,17 +10,17 @@ import {
   Text,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/useAuth";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import { notifications } from "@mantine/notifications";
+import api from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, setUser } = useAuth();
-  const { sanctumPost } = useSanctumRequest();
+  const { user, token, setUser, setToken } = useAuthStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const [hasRedirected, setHasRedirected] = useState(false);
 
@@ -29,33 +29,46 @@ export default function LoginPage() {
       router.replace(`/dashboard/${user.role}`);
       setHasRedirected(true);
     }
-  }, [user?.role, hasRedirected, router]); // ✅ Stable dependencies
+  }, [user?.role, hasRedirected, router]);
 
   const handleLogin = async (e) => {
     e?.preventDefault();
-
-    setLoading(true);
+    setProcessing(true);
     setError("");
 
     try {
-      const response = await sanctumPost("/api/auth/login", {
+      const response = await api.post("/api/auth/login", {
         email,
         password,
       });
 
-      const { user: loggedInUser } = response.data;
-      if (loggedInUser?.role) {
+      const { user: loggedInUser, token: accessToken } = response.data;
+
+      if (loggedInUser?.role && accessToken) {
         setUser(loggedInUser);
+        setToken(accessToken);
+
+        notifications.show({
+          title: "Welcome Back",
+          message: `Logged in as ${loggedInUser.name || loggedInUser.email}`,
+          color: "teal",
+        });
+
         router.push(`/dashboard/${loggedInUser.role}`);
         setHasRedirected(true);
       } else {
-        setError("Login succeeded but role was not set.");
+        setError("Login succeeded but role or token was missing.");
       }
     } catch (err) {
       console.error("Login failed:", err);
-      setError("Invalid credentials or server error");
+      setError("Invalid credentials or server error.");
+      notifications.show({
+        title: "Login Failed",
+        message: "Invalid credentials or server error.",
+        color: "red",
+      });
     } finally {
-      setLoading(false);
+      setProcessing(false);
     }
   };
 
@@ -76,7 +89,7 @@ export default function LoginPage() {
           </Text>
 
           {error && (
-            <Text color="red" size="sm">
+            <Text c="red" size="sm">
               {error}
             </Text>
           )}
@@ -87,6 +100,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            aria-label="Email input field"
           />
 
           <PasswordInput
@@ -95,6 +109,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            aria-label="Password input field"
           />
 
           <Button
@@ -105,11 +120,17 @@ export default function LoginPage() {
             onClick={() => router.push("/auth/forgot-password")}
             style={{ alignSelf: "flex-end" }}
             type="button"
+            aria-label="Forgot password link"
           >
             Forgot password?
           </Button>
 
-          <Button fullWidth type="submit" loading={loading}>
+          <Button
+            fullWidth
+            type="submit"
+            loading={processing}
+            aria-label="Submit login"
+          >
             Log In
           </Button>
 
@@ -121,6 +142,7 @@ export default function LoginPage() {
             color="blue"
             mt="sm"
             style={{ textDecoration: "underline", cursor: "pointer" }}
+            aria-label="Registration link"
           >
             Don’t have an account? Sign up
           </Text>

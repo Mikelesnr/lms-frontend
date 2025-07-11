@@ -1,33 +1,64 @@
-"use client";
-
 import { useState } from "react";
-import { Table, Progress, Button, Flex, Text } from "@mantine/core";
-import LessonView from "@/components/lesson/LessonView"; // 🔁 adjust path as needed
+import {
+  Table,
+  Progress,
+  Button,
+  Flex,
+  Text,
+  Badge,
+  Center,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import LessonView from "@/components/lesson/LessonView";
 
 export default function EnrolledCoursesTable({ courses = [] }) {
   const [activeLessonId, setActiveLessonId] = useState(null);
 
   const handleReturnToCourses = () => setActiveLessonId(null);
-  const handleSwitchLesson = (lessonId) => setActiveLessonId(lessonId);
+
+  const handleSwitchLesson = (lessonId, courseTitle) => {
+    notifications.show({
+      title: "Lesson Opened",
+      message: `Opening next lesson from "${courseTitle}".`,
+      color: "teal",
+    });
+    setActiveLessonId(lessonId);
+  };
 
   if (activeLessonId) {
     return (
       <LessonView
         id={activeLessonId}
         onReturnToCourses={handleReturnToCourses}
-        onSwitchLesson={handleSwitchLesson}
+        onSwitchLesson={(lessonId) => setActiveLessonId(lessonId)}
       />
     );
   }
 
+  if (courses.length === 0) {
+    return (
+      <Center mt="xl">
+        <Text c="dimmed">You haven’t enrolled in any courses yet.</Text>
+      </Center>
+    );
+  }
+
   return (
-    <Table striped highlightOnHover>
+    <Table striped highlightOnHover withTableBorder>
       <thead>
         <tr>
-          <th style={{ textAlign: "left", padding: 10 }}>Course</th>
-          <th style={{ textAlign: "left", padding: 10 }}>Instructor</th>
-          <th style={{ textAlign: "left", padding: 10 }}>Progress</th>
-          <th style={{ textAlign: "left", padding: "0 30px" }}>Continue</th>
+          <th scope="col" style={{ textAlign: "left", padding: "10px" }}>
+            📘 Course
+          </th>
+          <th scope="col" style={{ textAlign: "left", padding: "10px" }}>
+            🧑‍🏫 Instructor
+          </th>
+          <th scope="col" style={{ textAlign: "left", padding: "10px" }}>
+            📈 Progress
+          </th>
+          <th scope="col" style={{ textAlign: "center", padding: "10px" }}>
+            ▶️ Continue
+          </th>
         </tr>
       </thead>
       <tbody>
@@ -38,15 +69,16 @@ export default function EnrolledCoursesTable({ courses = [] }) {
           return (
             <tr key={course.id}>
               <td>{course.title}</td>
-              <td>{course.instructor?.name}</td>
+              <td>{course.instructor?.name ?? "—"}</td>
               <td>
-                <Flex align="center" gap="sm" style={{ maxWidth: 200 }}>
+                <Flex align="center" gap="sm" style={{ maxWidth: 220 }}>
                   <Progress
                     value={progress}
                     size="sm"
                     radius="xl"
                     w="100%"
                     color={progress === 100 ? "green" : "blue"}
+                    aria-label={`Progress: ${progress}%`}
                   />
                   <Text
                     size="sm"
@@ -57,18 +89,21 @@ export default function EnrolledCoursesTable({ courses = [] }) {
                   </Text>
                 </Flex>
               </td>
-              <td style={{ alignContent: "center" }}>
+              <td style={{ textAlign: "center" }}>
                 {progress === 100 ? (
-                  <Text size="sm" color="green">
-                    🎉 Completed
-                  </Text>
+                  <Badge color="green" size="sm" variant="light">
+                    Completed
+                  </Badge>
                 ) : (
                   <Button
                     size="xs"
                     variant="light"
                     color="blue"
-                    style={{ margin: "5px 30px", textAlign: "center" }}
-                    onClick={() => handleSwitchLesson(nextLesson?.id)}
+                    style={{ margin: "5px 0" }}
+                    onClick={() =>
+                      handleSwitchLesson(nextLesson?.id, course.title)
+                    }
+                    aria-label={`Resume ${course.title}`}
                   >
                     Resume
                   </Button>

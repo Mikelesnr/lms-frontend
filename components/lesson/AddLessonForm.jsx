@@ -1,8 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { TextInput, Textarea, Button, NumberInput } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import {
+  TextInput,
+  Textarea,
+  Button,
+  NumberInput,
+  Stack,
+  Paper,
+} from "@mantine/core";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function AddLessonForm({ courseId, onSuccess }) {
   const [title, setTitle] = useState("");
@@ -11,20 +19,26 @@ export default function AddLessonForm({ courseId, onSuccess }) {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { sanctumPost } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   const handleCreate = async () => {
     setLoading(true);
     try {
-      await sanctumPost("/api/lessons", {
-        course_id: courseId,
-        title,
-        content,
-        video_url: videoUrl,
-        order,
-      });
+      await api.post(
+        "/api/lessons",
+        {
+          course_id: courseId,
+          title,
+          content,
+          video_url: videoUrl,
+          order,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-      onSuccess();
+      onSuccess?.();
       setTitle("");
       setContent("");
       setVideoUrl("");
@@ -37,29 +51,35 @@ export default function AddLessonForm({ courseId, onSuccess }) {
   };
 
   return (
-    <>
-      <TextInput
-        label="Title"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-      />
-      <Textarea
-        label="Content"
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        mt="sm"
-      />
-      <TextInput
-        label="Video URL"
-        value={videoUrl}
-        onChange={(e) => setVideoUrl(e.target.value)}
-        mt="sm"
-      />
-      <NumberInput label="Order" value={order} onChange={setOrder} mt="sm" />
-      <Button onClick={handleCreate} mt="md" loading={loading}>
-        Add Lesson
-      </Button>
-    </>
+    <Paper withBorder p="md" radius="md">
+      <Stack spacing="sm">
+        <TextInput
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+        <Textarea
+          label="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+        />
+        <TextInput
+          label="Video URL"
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+        />
+        <NumberInput
+          label="Order"
+          value={order}
+          onChange={setOrder}
+          min={1}
+          allowDecimal={false}
+        />
+        <Button onClick={handleCreate} loading={loading}>
+          Add Lesson
+        </Button>
+      </Stack>
+    </Paper>
   );
 }

@@ -17,15 +17,16 @@ import { IconSearch, IconAlertCircle } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/context/useAuth";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import api from "@/lib/api";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import useLogout from "@/lib/hooks/useLogout";
 import CourseCard from "@/components/courses/CourseCard";
 
 export default function AllCoursesPage() {
-  const { user, setUser } = useAuth();
-  const { sanctumPost, sanctumGet } = useSanctumRequest();
+  const { user, token } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
+  const logout = useLogout(token); // ✅ Pass token into hook
 
   const [courses, setCourses] = useState([]);
   const [search, setSearch] = useState("");
@@ -38,12 +39,11 @@ export default function AllCoursesPage() {
   const [error, setError] = useState(null);
   const [categoryOptions, setCategoryOptions] = useState([]);
 
-  // ✅ Fetch course categories once on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await sanctumGet("/api/courses/categories");
-        setCategoryOptions(res.data || []);
+        const response = await api.get("/api/courses/categories");
+        setCategoryOptions(response.data || []);
       } catch (err) {
         console.error("Failed to load categories:", err);
       } finally {
@@ -51,18 +51,25 @@ export default function AllCoursesPage() {
       }
     };
     fetchCategories();
-  }, [sanctumGet]);
+  }, []);
 
-  // ✅ Fetch courses when filters or page change
   useEffect(() => {
     const fetchCourses = async () => {
       setLoadingCourses(true);
       try {
-        const res = await sanctumGet("/api/courses/all", {
-          params: { search: debouncedSearch, category, page },
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await api.get("/api/courses/all", {
+          headers,
+          params: {
+            search: debouncedSearch,
+            category,
+            page,
+          },
         });
-        setCourses(res.data.data || []);
-        const lastPage = res.data?.meta?.last_page ?? res.data?.last_page;
+
+        setCourses(response.data.data || []);
+        const lastPage =
+          response.data?.meta?.last_page ?? response.data?.last_page;
         setTotalPages(Number.isInteger(lastPage) ? lastPage : 1);
         setError(null);
       } catch (err) {
@@ -74,7 +81,7 @@ export default function AllCoursesPage() {
       }
     };
     fetchCourses();
-  }, [debouncedSearch, category, page, sanctumGet]);
+  }, [debouncedSearch, category, page, token]);
 
   const handlePageChange = (newPage) => {
     setPage(newPage);
@@ -82,15 +89,9 @@ export default function AllCoursesPage() {
   };
 
   const handleLogout = async () => {
-    try {
-      await sanctumPost("/api/auth/logout");
-      setUser(null);
-      if (pathname.startsWith("/dashboard")) {
-        router.push("/auth/login");
-      }
-    } catch (err) {
-      console.error("Logout failed", err);
-      alert("Logout failed. Please try again.");
+    await logout();
+    if (pathname.startsWith("/dashboard")) {
+      router.push("/auth/login");
     }
   };
 

@@ -11,13 +11,12 @@ import {
   Select,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
-import { useAuth } from "@/context/useAuth";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { user } = useAuth();
-  const { sanctumPost } = useSanctumRequest();
+  const { user } = useAuthStore();
 
   const [name, setName] = useState("");
   const [role, setRole] = useState("student");
@@ -27,7 +26,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ Guarded redirect after login
   useEffect(() => {
     if (user?.role) {
       router.replace(`/dashboard/${user.role}`);
@@ -40,7 +38,7 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      await sanctumPost("/api/auth/register", {
+      await api.post("/api/auth/register", {
         name,
         email,
         password,
@@ -52,7 +50,7 @@ export default function RegisterPage() {
     } catch (err) {
       console.error("Registration failed:", err);
       setError(
-        err?.response?.data?.message || "Invalid input or CSRF mismatch"
+        err?.response?.data?.message || "Invalid input or server error."
       );
     } finally {
       setLoading(false);
@@ -76,7 +74,7 @@ export default function RegisterPage() {
           </Text>
 
           {error && (
-            <Text color="red" size="sm">
+            <Text c="red" size="sm">
               {error}
             </Text>
           )}

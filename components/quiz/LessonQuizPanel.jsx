@@ -10,14 +10,16 @@ import {
   Card,
   Divider,
   Stack,
+  Loader,
 } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { notifications } from "@mantine/notifications";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 import AddQuestionModal from "./AddQuestionModal";
 import AddAnswerModal from "./AddAnswerModal";
 import AddQuizForm from "./AddQuizForm";
 
 export default function LessonQuizPanel({ lessonId }) {
-  const { sanctumGet } = useSanctumRequest();
   const [quiz, setQuiz] = useState(null);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [showAnswerModalFor, setShowAnswerModalFor] = useState(null);
@@ -25,10 +27,14 @@ export default function LessonQuizPanel({ lessonId }) {
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const { token } = useAuthStore();
+
   const fetchQuiz = async () => {
     setLoading(true);
     try {
-      const res = await sanctumGet(`/api/lessons/${lessonId}/quiz`);
+      const res = await api.get(`/api/lessons/${lessonId}/quiz`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setQuiz(res.data);
       setNotFound(false);
     } catch (err) {
@@ -37,6 +43,11 @@ export default function LessonQuizPanel({ lessonId }) {
         setNotFound(true);
       } else {
         console.error("Failed to fetch quiz:", err);
+        notifications.show({
+          title: "Quiz Fetch Failed",
+          message: "Unable to load quiz. Please try again later.",
+          color: "red",
+        });
       }
     } finally {
       setLoading(false);
@@ -45,13 +56,18 @@ export default function LessonQuizPanel({ lessonId }) {
 
   useEffect(() => {
     fetchQuiz();
-  }, [lessonId, sanctumGet]); // ✅ added sanctumGet
+  }, [lessonId, token]);
 
   const handleQuestionAdded = (newQuestion) => {
     setQuiz((prev) => ({
       ...prev,
       questions: [...prev.questions, newQuestion],
     }));
+    notifications.show({
+      title: "Question Added",
+      message: "Your question was added successfully.",
+      color: "teal",
+    });
   };
 
   const handleAnswerAdded = (questionId, newAnswer) => {
@@ -63,15 +79,25 @@ export default function LessonQuizPanel({ lessonId }) {
           : q
       ),
     }));
+    notifications.show({
+      title: "Answer Added",
+      message: "Your answer was saved.",
+      color: "teal",
+    });
   };
 
-  if (loading) return null;
+  if (loading) return <Loader mt="md" />;
 
   if (notFound) {
     return (
       <Box mt="md">
         <Text c="dimmed">No quiz available for this lesson.</Text>
-        <Button size="xs" mt="xs" onClick={() => setShowAddQuiz(true)}>
+        <Button
+          size="xs"
+          mt="xs"
+          onClick={() => setShowAddQuiz(true)}
+          aria-label="Add new quiz for lesson"
+        >
           ➕ Add Quiz
         </Button>
 
@@ -92,7 +118,11 @@ export default function LessonQuizPanel({ lessonId }) {
     <Box mt="lg">
       <Group justify="space-between">
         <Title order={4}>🧪 Quiz: {quiz.title || "Untitled"}</Title>
-        <Button onClick={() => setShowQuestionModal(true)} size="xs">
+        <Button
+          onClick={() => setShowQuestionModal(true)}
+          size="xs"
+          aria-label="Add new quiz question"
+        >
           ➕ Add Question
         </Button>
       </Group>
@@ -101,7 +131,11 @@ export default function LessonQuizPanel({ lessonId }) {
         <Card key={q.id} mt="md" padding="md" shadow="sm" radius="sm">
           <Group justify="space-between">
             <Text fw={500}>{q.question_text}</Text>
-            <Button size="xs" onClick={() => setShowAnswerModalFor(q.id)}>
+            <Button
+              size="xs"
+              onClick={() => setShowAnswerModalFor(q.id)}
+              aria-label={`Add answer to question: ${q.question_text}`}
+            >
               ➕ Add Answer
             </Button>
           </Group>

@@ -3,18 +3,20 @@
 import { useState, useEffect } from "react";
 import { Divider, SimpleGrid, Text, Loader, Center } from "@mantine/core";
 import CourseCard from "./CourseCard";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
-export default function FeaturedCourses({ user }) {
+export default function FeaturedCourses() {
   const [featured, setFeatured] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { sanctumGet } = useSanctumRequest();
+  const { user, token } = useAuthStore();
 
   useEffect(() => {
     const fetchFeatured = async () => {
       setLoading(true);
       try {
-        const res = await sanctumGet("/api/courses/featured");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await api.get("/api/courses/featured", { headers });
         setFeatured(res.data ?? []);
       } catch (err) {
         console.error("Error loading featured courses:", err);
@@ -25,7 +27,7 @@ export default function FeaturedCourses({ user }) {
     };
 
     fetchFeatured();
-  }, [sanctumGet]); // ✅ Complete dependency array
+  }, [token]);
 
   return (
     <div style={{ marginTop: "3rem" }}>
@@ -38,7 +40,7 @@ export default function FeaturedCourses({ user }) {
       ) : featured.length > 0 ? (
         <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
           {featured.map((course) => (
-            <CourseCard key={course.id} course={course} user={user} />
+            <CourseCard key={course.id} course={course} />
           ))}
         </SimpleGrid>
       ) : (

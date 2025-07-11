@@ -3,20 +3,23 @@
 import { Text } from "@mantine/core";
 import StandardModal from "../layouts/StandardModal";
 import { useState } from "react";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function DeleteCourseConfirm({ course, onClose, onDeleted }) {
   const [loading, setLoading] = useState(false);
-  const { sanctumDelete } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   if (!course) return null;
 
   const handleDelete = async () => {
     setLoading(true);
     try {
-      await sanctumDelete(`/api/courses/${course.id}`);
-      onDeleted();
-      onClose();
+      await api.delete(`/api/courses/${course.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      onDeleted?.();
+      onClose?.();
     } catch (err) {
       console.error("Failed to delete course:", err);
     } finally {

@@ -2,17 +2,28 @@
 
 import { useState } from "react";
 import { Button, Text, Stack, Paper } from "@mantine/core";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import api from "@/lib/api";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
 
 export default function VerifyEmailPage() {
   const [message, setMessage] = useState("");
-  const { sanctumPost } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   const resendLink = async () => {
     setMessage("");
 
+    // ✅ Prevent unauthenticated requests during hydration
+    if (!token || typeof token !== "string") {
+      setMessage("⚠️ Token missing. Please log in before resending.");
+      return;
+    }
+
     try {
-      await sanctumPost("/api/auth/email/verification-notification");
+      await api.post("/api/auth/email/verification-notification", null, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setMessage("✅ Verification link resent. Check your inbox!");
     } catch (err) {
       console.error("Resend failed:", err);
@@ -28,7 +39,9 @@ export default function VerifyEmailPage() {
         </Text>
         <Text>Please verify your email before proceeding.</Text>
         <Button onClick={resendLink}>Resend Verification Email</Button>
-        {message && <Text c="blue">{message}</Text>}
+        {message && (
+          <Text c={message.includes("✅") ? "green" : "red"}>{message}</Text>
+        )}
       </Stack>
     </Paper>
   );

@@ -2,11 +2,12 @@
 
 import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
-import { AuthProvider } from "@/context/AuthProvider";
+import RootAuthLoader from "@/lib/bootstrap/RootAuthLoader"; // ⬅️ Import the bootstrapper
 
 export default function ClientLayout({ children }) {
   return (
-    <AuthProvider>
+    <>
+      <RootAuthLoader />
       <MantineProvider
         withGlobalStyles
         withNormalizeCSS
@@ -14,6 +15,6 @@ export default function ClientLayout({ children }) {
       >
         {children}
       </MantineProvider>
-    </AuthProvider>
+    </>
   );
 }

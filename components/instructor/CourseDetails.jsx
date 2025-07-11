@@ -18,7 +18,8 @@ import EditLessonModal from "@/components/lesson/EditLessonModal";
 import DeleteLessonConfirm from "@/components/lesson/DeleteLessonConfirm";
 import AddLessonForm from "@/components/lesson/AddLessonForm";
 import LessonQuizPanel from "@/components/quiz/LessonQuizPanel";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function CourseDetails({ id }) {
   const [course, setCourse] = useState(null);
@@ -28,12 +29,14 @@ export default function CourseDetails({ id }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedLesson, setSelectedLesson] = useState(null);
 
-  const { sanctumGet } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   const fetchCourse = async () => {
     setLoading(true);
     try {
-      const res = await sanctumGet(`/api/courses/${id}`);
+      const res = await api.get(`/api/courses/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       setCourse(res.data);
     } catch (err) {
       console.error("Failed to load course:", err);
@@ -45,7 +48,7 @@ export default function CourseDetails({ id }) {
 
   useEffect(() => {
     fetchCourse();
-  }, [id, sanctumGet]);
+  }, [id, token]);
 
   if (loading) return <Loader mt="xl" />;
   if (!course) return <Text mt="xl">Course not found.</Text>;

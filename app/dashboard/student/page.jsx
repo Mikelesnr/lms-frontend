@@ -13,21 +13,26 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import StudentOverviewCards from "@/components/student/OverviewCards";
 import EnrolledCoursesTable from "@/components/student/EnrolledCoursesTable";
 import StudentQuizAnalytics from "@/components/student/QuizAnalytics";
-import useSanctumRequest from "@/lib/hooks/useSanctumRequest";
 import RequireAuth from "@/components/auth/RequireAuth";
+import { useAuthStore } from "@/lib/stores/useAuthStore";
+import api from "@/lib/api";
 
 export default function StudentDashboard() {
   const [view, setView] = useState("overview");
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
-  const { sanctumGet } = useSanctumRequest();
+  const { token } = useAuthStore();
 
   useEffect(() => {
+    if (!token) return; // ✅ Wait until token is available
+
     const fetchCourses = async () => {
       try {
-        const res = await sanctumGet("/api/enrollments/me");
-        setCourses(res.data || []);
+        const response = await api.get("/api/enrollments/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setCourses(response.data || []);
         setLoadError(null);
       } catch (err) {
         console.error("❌ Error fetching enrollments:", err);
@@ -39,7 +44,7 @@ export default function StudentDashboard() {
     };
 
     fetchCourses();
-  }, [sanctumGet]); // ✅ Stable dependency
+  }, [token]);
 
   const navbar = (
     <>
