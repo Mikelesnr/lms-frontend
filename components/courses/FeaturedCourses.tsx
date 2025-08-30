@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Divider, SimpleGrid, Text, Loader, Center } from "@mantine/core";
-import api, { getCsrfCookie } from "@/lib/api"; // Import api and getCsrfCookie
+import api from "@/lib/api"; // Import api and getCsrfCookie
 import { Course } from "@/types"; // Import the Course type
 import CourseCard from "@/components/courses/CourseCard"; // Import CourseCard from the same folder
 
@@ -14,8 +14,6 @@ const FeaturedCourses: React.FC = () => {
     const fetchFeatured = async () => {
       setLoading(true);
       try {
-        // Get the CSRF cookie before making the request
-        await getCsrfCookie();
         const res = await api.get<Course[]>("/api/courses/featured");
         setFeatured(res.data ?? []);
       } catch (err) {
