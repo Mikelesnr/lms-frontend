@@ -15,9 +15,10 @@ import {
   Stack,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProfileModal from "@/components/common/ProfileModal";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface DashboardLayoutProps {
   title: string;
@@ -34,11 +35,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   const [profileModalOpen, setProfileModalOpen] = useState<boolean>(false);
 
   const { user, logout, fetchUser } = useAuth();
+  const router = useRouter();
 
   const handleProfileModalClose = () => {
     setProfileModalOpen(false);
     fetchUser();
   };
+
+  useEffect(() => {
+    //redirect to email verification page if email is not verified
+    if (!user?.email_verified_at) {
+      router.replace("/auth/verify-email");
+    }
+  }, [user, router]);
 
   return (
     <AppShell
