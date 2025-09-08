@@ -64,7 +64,7 @@ const RegisterPage: React.FC = () => {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user?.role) {
-      router.replace(`/dashboard/${user.role}`);
+      router.replace(`/${user.role}/dashboard`);
     }
   }, [authLoading, isAuthenticated, user?.role, router]);
 
