@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { TextInput, Textarea, Loader, Stack } from "@mantine/core";
 import StandardModal from "@/components/layouts/StandardModal";
 import { useAuth } from "@/context/AuthContext";
-import api, { getCsrfCookie } from "@/lib/api";
+import api from "@/lib/api";
 import { notifications } from "@mantine/notifications";
 import { Lesson } from "@/types";
 
@@ -62,7 +62,6 @@ export default function EditLessonModal({
     setLoading(true);
 
     try {
-      await getCsrfCookie();
       await api.put(`/api/lessons/${lesson.id}`, {
         title,
         content,

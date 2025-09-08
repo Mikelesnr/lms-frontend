@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import api, { getCsrfCookie } from "@/lib/api";
+import api from "@/lib/api";
+import Cookies from "js-cookie";
 import { User, AuthContextType, LoginCredentials, RegisterData } from "@/types";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
@@ -17,7 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data } = await api.get<User>("/api/user");
       setUser(data);
-    } catch (error) {
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -30,9 +31,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      // Fetch CSRF cookie before making the login POST request to prevent 419 errors
-      await getCsrfCookie();
-      await api.post("/api/auth/login", credentials);
+      const { data } = await api.post<{ token: string }>(
+        "/api/auth/login",
+        credentials
+      );
+      Cookies.set("auth_token", data.token, {
+        secure: true,
+        sameSite: "strict",
+        expires: 7, // Optional: token expires in 7 days
+      });
       await fetchUser();
       notifications.show({
         title: "Success! 🎉",
@@ -54,9 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      // Fetch CSRF cookie before making the logout POST request to prevent 419 errors
-      await getCsrfCookie();
-      await api.post("/api/auth/logout");
+      await api.post("/api/auth/logout"); // Optional: revoke token server-side
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      Cookies.remove("auth_token");
       setUser(null);
       notifications.show({
         title: "Logged Out",
@@ -64,39 +73,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         color: "blue",
       });
       router.push("/");
-    } catch (error) {
-      console.error("Logout failed:", error);
-      notifications.show({
-        title: "Logout Failed",
-        message: "Could not log out. Please try again.",
-        color: "red",
-      });
     }
   };
 
   const register = async (userData: RegisterData) => {
     try {
-      // Fetch CSRF cookie before making the register POST request to prevent 419 errors
-      await getCsrfCookie();
       const response = await api.post("/api/auth/register", userData);
-      await fetchUser(); // Attempt to fetch user after registration if auto-login occurs
+      const { token } = response.data;
+
+      Cookies.set("auth_token", token, {
+        secure: true,
+        sameSite: "strict",
+        expires: 7,
+      });
+
+      await fetchUser();
+
       notifications.show({
         title: "Registration Successful! ✅",
-        message: "Your account has been created. You can now log in.",
+        message: "Your account has been created. You are now logged in.",
         color: "teal",
       });
+
       return response.data;
     } catch (error: any) {
       console.error("Registration failed:", error);
       let errorMessage = "Registration failed. Please try again.";
-      if (error.response && error.response.data) {
-        if (error.response.data.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.data.errors) {
-          const errors = error.response.data.errors;
-          const firstError = Object.values(errors).flat()[0];
-          errorMessage = firstError as string;
-        }
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        const errors = error.response.data.errors;
+        const firstError = Object.values(errors).flat()[0];
+        errorMessage = firstError as string;
       }
       notifications.show({
         title: "Registration Failed",
